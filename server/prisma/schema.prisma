@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+
+  sales_representative SalesRepresentative?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Region {
+  id   String @id @default(uuid())
+  name String @unique
+
+  areas                 Area[]
+  retailers             Retailer[]
+  sales_representatives SalesRepresentative[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Area {
+  id        String @id @default(uuid())
+  name      String
+  region_id String
+
+  region Region @relation(fields: [region_id], references: [id], onDelete: Cascade)
+
+  territories           Territory[]
+  retailers             Retailer[]
+  sales_representatives SalesRepresentative[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([name, region_id])
+}
+
+model Territory {
+  id      String @id @default(uuid())
+  name    String
+  area_id String
+
+  area Area @relation(fields: [area_id], references: [id], onDelete: Cascade)
+
+  retailers             Retailer[]
+  sales_representatives SalesRepresentative[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([name, area_id])
+}
+
+model Distributor {
+  id   String @id @default(uuid())
+  name String @unique
+
+  retailers Retailer[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Retailer {
+  id                      String  @id @default(uuid())
+  name                    String
+  phone                   String?
+  region_id               String
+  area_id                 String
+  distributor_id          String
+  territory_id            String
+  sales_representative_id String?
+  points                  Int   
+  routes                  String?
+
+  region               Region               @relation(fields: [region_id], references: [id])
+  area                 Area                 @relation(fields: [area_id], references: [id])
+  distributor          Distributor          @relation(fields: [distributor_id], references: [id])
+  territory            Territory            @relation(fields: [territory_id], references: [id])
+  sales_representative SalesRepresentative? @relation(fields: [sales_representative_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model SalesRepresentative {
+  id      String @id @default(uuid())
+  user_id String @unique
+
+  username String? @unique
+  name     String?
+  phone    String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  region_id    String?
+  area_id      String?
+  territory_id String?
+
+  region    Region?    @relation(fields: [region_id], references: [id])
+  area      Area?      @relation(fields: [area_id], references: [id])
+  territory Territory? @relation(fields: [territory_id], references: [id])
+
+  retailers Retailer[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
