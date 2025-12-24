@@ -1,0 +1,17 @@
+version: "3.9"
+
+services: 
+  postgres:
+    image: postgres:alpine3.20
+    container_name: sales-distribution-postgres 
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "MAK#9555"
+      POSTGRES_DB: "nationwide_sales_distribution_system"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
