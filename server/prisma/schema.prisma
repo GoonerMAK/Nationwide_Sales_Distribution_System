@@ -82,7 +82,7 @@ model Retailer {
   distributor_id          String
   territory_id            String
   sales_representative_id String?
-  points                  Int   
+  points                  Int?   
   routes                  String?
 
   region               Region               @relation(fields: [region_id], references: [id])
