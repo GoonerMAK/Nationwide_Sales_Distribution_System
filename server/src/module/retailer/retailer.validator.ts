@@ -38,6 +38,7 @@ export const retailerQuerySchema = z.object({
     distributor_id: z.uuid({ message: "Invalid distributor ID format" }).optional(),
     territory_id: z.uuid({ message: "Invalid territory ID format" }).optional(),
     sales_representative_id: z.uuid({ message: "Invalid sales representative ID format" }).optional(),
+    assigned: z.enum(['true', 'false']).transform(val => val === 'true').optional(), 
     offset: z.string()
         .default('0')
         .transform(val => parseInt(val, 10))
