@@ -123,9 +123,46 @@ export const deleteRetailer = async (id: string) => {
     return prisma.retailer.delete({ where: { id } });
 };
 
-export const getAllRetailers = async (offset: number, limit: number) => {
+export const getRetailers = async (
+    offset: number,
+    limit: number,
+    filters?: {
+        name?: string;
+        phone?: string;
+        region_id?: string;
+        area_id?: string;
+        distributor_id?: string;
+        territory_id?: string;
+        sales_representative_id?: string;
+    }
+) => {
+    const where: any = {};
+    
+    if (filters?.name) {
+        where.name = { contains: filters.name, mode: 'insensitive' };
+    }
+    if (filters?.phone) {
+        where.phone = { contains: filters.phone };
+    }
+    if (filters?.region_id) {
+        where.region_id = filters.region_id;
+    }
+    if (filters?.area_id) {
+        where.area_id = filters.area_id;
+    }
+    if (filters?.distributor_id) {
+        where.distributor_id = filters.distributor_id;
+    }
+    if (filters?.territory_id) {
+        where.territory_id = filters.territory_id;
+    }
+    if (filters?.sales_representative_id) {
+        where.sales_representative_id = filters.sales_representative_id;
+    }
+
     const [retailers, totalCount] = await prisma.$transaction([
         prisma.retailer.findMany({
+            where,
             skip: offset,
             take: limit,
             select: {
@@ -143,7 +180,7 @@ export const getAllRetailers = async (offset: number, limit: number) => {
                 updated_at: true,
             },
         }),
-        prisma.retailer.count(),
+        prisma.retailer.count({ where }),
     ]);
 
     return {

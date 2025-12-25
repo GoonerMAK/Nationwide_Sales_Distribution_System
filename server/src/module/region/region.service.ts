@@ -52,9 +52,20 @@ export const deleteRegion = async (id: string) => {
     return prisma.region.delete({ where: { id } });
 };
 
-export const getAllRegions = async (offset: number, limit: number) => {
+export const getRegions = async (
+    offset: number, 
+    limit: number,
+    filters?: { name?: string }
+) => {
+    const where: any = {};
+    
+    if (filters?.name) {
+        where.name = { contains: filters.name, mode: 'insensitive' };
+    }
+
     const [regions, totalCount] = await prisma.$transaction([
         prisma.region.findMany({
+            where,
             skip: offset,
             take: limit,
             select: {
@@ -64,7 +75,7 @@ export const getAllRegions = async (offset: number, limit: number) => {
                 updated_at: true,
             },
         }),
-        prisma.region.count(),
+        prisma.region.count({ where }),
     ]);
 
     return {

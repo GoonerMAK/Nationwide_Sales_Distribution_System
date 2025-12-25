@@ -85,9 +85,26 @@ export const deleteArea = async (id: string) => {
     return prisma.area.delete({ where: { id } });
 };
 
-export const getAllAreas = async (offset: number, limit: number) => {
+export const getAreas = async (
+    offset: number,
+    limit: number,
+    filters?: {
+        name?: string;
+        region_id?: string;
+    }
+) => {
+    const where: any = {};
+    
+    if (filters?.name) {
+        where.name = { contains: filters.name, mode: 'insensitive' };
+    }
+    if (filters?.region_id) {
+        where.region_id = filters.region_id;
+    }
+
     const [areas, totalCount] = await prisma.$transaction([
         prisma.area.findMany({
+            where,
             skip: offset,
             take: limit,
             select: {
@@ -98,7 +115,7 @@ export const getAllAreas = async (offset: number, limit: number) => {
                 updated_at: true,
             },
         }),
-        prisma.area.count(),
+        prisma.area.count({ where }),
     ]);
 
     return {
