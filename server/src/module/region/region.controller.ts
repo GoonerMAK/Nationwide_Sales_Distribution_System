@@ -1,0 +1,99 @@
+import type { Request, Response } from 'express';
+import * as regionService from '../region/region.service.js';
+import type { RegionParams, RegionCreate, RegionUpdate, RegionQuery } from '../region/region.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
+
+export const createRegion = async (
+    req: Request<unknown, unknown, RegionCreate, unknown>,
+    res: Response
+) => {
+    const { name } = req.body;
+    
+    try {
+        const newRegion = await regionService.createRegion(name);
+
+        await invalidateCache('cache:/regions*');
+        await invalidateCache('cache:/region/*');
+
+        res.status(201).json(newRegion);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || 'Failed to create region' });
+    }
+};
+
+export const updateRegion = async (
+    req: Request<RegionParams, unknown, RegionUpdate, unknown>,
+    res: Response
+) => {
+    const { id } = req.params;
+    const updates = req.body.data;
+    
+    try {
+        const updatedRegion = await regionService.updateRegion(id, updates);
+
+        await invalidateCache('cache:/regions*');
+        await invalidateCache(`cache:/region/${id}`);
+
+        res.status(200).json(updatedRegion);
+    } catch (error: any) {
+        if (error.message.includes('not found')) {
+            res.status(404).json({ message: error.message });
+        } else {
+            res.status(400).json({ message: error.message || 'Failed to update region' });
+        }
+    }
+};
+
+export const deleteRegion = async (
+    req: Request<RegionParams, unknown, unknown, unknown>,
+    res: Response
+) => {
+    const { id } = req.params;
+    
+    try {
+        const deletedRegion = await regionService.deleteRegion(id);
+
+        await invalidateCache('cache:/regions*');
+        await invalidateCache(`cache:/region/${id}`);
+        
+        res.status(200).json({ message: 'Region deleted successfully', region: deletedRegion });
+    } catch (error: any) {
+        if (error.message.includes('not found')) {
+            res.status(404).json({ message: error.message });
+        } else {
+            res.status(400).json({ message: error.message || 'Failed to delete region' });
+        }
+    }
+};
+
+export const getRegions = async (
+    req: Request<unknown, unknown, unknown, RegionQuery>,
+    res: Response
+) => {
+    try {
+        const { offset, limit, name } = req.query;
+        const filters = { name };
+        const regions = await regionService.getRegions(Number(offset), Number(limit), filters);
+        res.status(200).json(regions);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message || 'Failed to fetch regions' });
+    }
+};
+
+export const getRegionById = async (
+    req: Request<RegionParams, unknown, unknown, unknown>,
+    res: Response
+) => {
+    const { id } = req.params;
+    
+    try {
+        const region = await regionService.getRegionById(id);
+        res.status(200).json(region);
+    } catch (error: any) {
+        if (error.message.includes('not found')) {
+            res.status(404).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: error.message || 'Failed to fetch region' });
+        }
+    }
+};

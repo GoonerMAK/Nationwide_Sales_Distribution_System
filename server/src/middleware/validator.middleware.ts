@@ -10,3 +10,23 @@ export const validateRequest = (schema: z.ZodTypeAny) => async (req: Request, re
         res.status(400).json({ message: error.errors[0].message });
     }
 };
+
+export const validateParams = (schema: z.ZodTypeAny) => async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const parsedParams = await schema.parseAsync(req.params);
+        req.params = parsedParams as any;
+        next();
+    } catch (error: any) {
+        res.status(400).json({ message: error.errors[0].message });
+    }
+};
+
+export const validateQuery = (schema: z.ZodTypeAny) => async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const parsedQuery = await schema.parseAsync(req.query);
+        req.query = parsedQuery as any;
+        next();
+    } catch (error: any) {
+        res.status(400).json({ message: error.errors[0].message });
+    }
+};

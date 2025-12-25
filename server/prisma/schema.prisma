@@ -82,7 +82,7 @@ model Retailer {
   distributor_id          String
   territory_id            String
   sales_representative_id String?
-  points                  Int   
+  points                  Int?   
   routes                  String?
 
   region               Region               @relation(fields: [region_id], references: [id])
@@ -93,6 +93,13 @@ model Retailer {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  @@index([sales_representative_id]) 
+  @@index([region_id])                
+  @@index([area_id])                  
+  @@index([territory_id])             
+  @@index([distributor_id])           
+  @@index([name])                     
 }
 
 model SalesRepresentative {
