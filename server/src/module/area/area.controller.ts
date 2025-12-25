@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import * as areaService from '../area/area.service.js';
 import type { AreaParams, AreaCreate, AreaUpdate, AreaQuery } from '../area/area.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 
 export const createArea = async (
     req: Request<unknown, unknown, AreaCreate, unknown>,
@@ -10,6 +11,10 @@ export const createArea = async (
     
     try {
         const newArea = await areaService.createArea(name, region_id);
+
+        await invalidateCache('cache:/areas*');
+        await invalidateCache('cache:/area/*');
+
         res.status(201).json(newArea);
     } catch (error: any) {
         res.status(400).json({ message: error.message || 'Failed to create area' });
@@ -25,6 +30,10 @@ export const updateArea = async (
     
     try {
         const updatedArea = await areaService.updateArea(id, updates);
+        
+        await invalidateCache('cache:/areas*');
+        await invalidateCache(`cache:/area/${id}`);
+
         res.status(200).json(updatedArea);
     } catch (error: any) {
         if (error.message.includes('not found')) {
@@ -43,6 +52,10 @@ export const deleteArea = async (
     
     try {
         const deletedArea = await areaService.deleteArea(id);
+
+        await invalidateCache('cache:/areas*');
+        await invalidateCache(`cache:/area/${id}`);
+
         res.status(200).json({ message: 'Area deleted successfully', area: deletedArea });
     } catch (error: any) {
         if (error.message.includes('not found')) {
