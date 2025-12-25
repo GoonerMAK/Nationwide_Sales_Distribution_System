@@ -17,13 +17,13 @@ dotenv.config();
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/auth', authRouter);
-app.use('/api', userRouter);
-app.use('/api', territoryRouter);
-app.use('/api', areaRouter);
-app.use('/api', distributorRouter);
-app.use('/api', retailerRouter);
-app.use('/api', salesRepresentativeRouter);
+app.use('/auth', authRouter);
+app.use('', userRouter);
+app.use('', territoryRouter);
+app.use('', areaRouter);
+app.use('', distributorRouter);
+app.use('', retailerRouter);
+app.use('', salesRepresentativeRouter);
 
 const PORT = process.env.PORT;
 
