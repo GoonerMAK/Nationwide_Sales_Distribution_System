@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import * as regionService from '../region/region.service.js';
 import type { RegionParams, RegionCreate, RegionUpdate, RegionQuery } from '../region/region.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 
 export const createRegion = async (
     req: Request<unknown, unknown, RegionCreate, unknown>,
@@ -10,6 +11,10 @@ export const createRegion = async (
     
     try {
         const newRegion = await regionService.createRegion(name);
+
+        await invalidateCache('cache:/regions*');
+        await invalidateCache('cache:/region/*');
+
         res.status(201).json(newRegion);
     } catch (error: any) {
         res.status(400).json({ message: error.message || 'Failed to create region' });
@@ -25,6 +30,10 @@ export const updateRegion = async (
     
     try {
         const updatedRegion = await regionService.updateRegion(id, updates);
+
+        await invalidateCache('cache:/regions*');
+        await invalidateCache(`cache:/region/${id}`);
+
         res.status(200).json(updatedRegion);
     } catch (error: any) {
         if (error.message.includes('not found')) {
@@ -43,6 +52,10 @@ export const deleteRegion = async (
     
     try {
         const deletedRegion = await regionService.deleteRegion(id);
+
+        await invalidateCache('cache:/regions*');
+        await invalidateCache(`cache:/region/${id}`);
+        
         res.status(200).json({ message: 'Region deleted successfully', region: deletedRegion });
     } catch (error: any) {
         if (error.message.includes('not found')) {

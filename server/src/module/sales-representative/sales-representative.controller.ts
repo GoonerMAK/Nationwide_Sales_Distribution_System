@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import * as salesRepresentativeService from './sales-representative.service.js';
 import type { SalesRepresentativeParams, SalesRepresentativeCreate, SalesRepresentativeUpdate, SalesRepresentativeQuery } from './sales-representative.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 
 export const createSalesRepresentative = async (
     req: Request<unknown, unknown, SalesRepresentativeCreate, unknown>,
@@ -26,6 +27,10 @@ export const createSalesRepresentative = async (
             area_id,
             territory_id
         );
+
+        await invalidateCache('cache:/sales-representatives*');
+        await invalidateCache('cache:/sales-representative/*');
+
         res.status(201).json(newSalesRepresentative);
     } catch (error: any) {
         res.status(400).json({ message: error.message || 'Failed to create sales representative' });
@@ -41,6 +46,10 @@ export const updateSalesRepresentative = async (
     
     try {
         const updatedSalesRepresentative = await salesRepresentativeService.updateSalesRepresentative(id, updates);
+
+        await invalidateCache('cache:/sales-representatives*');
+        await invalidateCache(`cache:/sales-representative/${id}`);
+
         res.status(200).json(updatedSalesRepresentative);
     } catch (error: any) {
         if (error.message.includes('not found')) {
@@ -59,6 +68,10 @@ export const deleteSalesRepresentative = async (
     
     try {
         const deletedSalesRepresentative = await salesRepresentativeService.deleteSalesRepresentative(id);
+
+        await invalidateCache('cache:/sales-representatives*');
+        await invalidateCache(`cache:/sales-representative/${id}`);
+        
         res.status(200).json({ message: 'Sales representative deleted successfully', salesRepresentative: deletedSalesRepresentative });
     } catch (error: any) {
         if (error.message.includes('not found')) {

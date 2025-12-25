@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from 'cookie-parser';
 import dotenv from "dotenv";
+import { connectRedis, disconnectRedis } from "./redis.js";
 
 import { authRouter } from "./module/auth/auth.routes.js";
 import { userRouter } from "./module/user/user.route.js";
@@ -25,6 +26,31 @@ app.use('/api', retailerRouter);
 app.use('/api', salesRepresentativeRouter);
 
 const PORT = process.env.PORT;
-export const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+
+const startServer = async () => {
+    try {
+        await connectRedis();
+        console.log('Redis connected successfully');
+        
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
+
+process.on('SIGINT', async () => {
+    console.log('Shutting down gracefully...');
+    await disconnectRedis();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    console.log('Shutting down gracefully...');
+    await disconnectRedis();
+    process.exit(0);
 });
