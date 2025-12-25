@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as retailerService from '../retailer/retailer.service.js';
-import type { RetailerParams, RetailerCreate, RetailerUpdate } from '../retailer/retailer.validator.js';
-import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import type { RetailerParams, RetailerCreate, RetailerUpdate, RetailerQuery } from '../retailer/retailer.validator.js';
 
 export const createRetailer = async (
     req: Request<unknown, unknown, RetailerCreate, unknown>,
@@ -74,13 +73,14 @@ export const deleteRetailer = async (
     }
 };
 
-export const getAllRetailers = async (
-    req: Request<unknown, unknown, unknown, PaginationQuery>,
+export const getRetailers = async (
+    req: Request<unknown, unknown, unknown, RetailerQuery>,
     res: Response
 ) => {
     try {
-        const { offset, limit } = req.query;
-        const retailers = await retailerService.getAllRetailers(Number(offset), Number(limit));
+        const { offset, limit, name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id } = req.query;
+        const filters = { name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id };
+        const retailers = await retailerService.getRetailers(Number(offset), Number(limit), filters);
         res.status(200).json(retailers);
     } catch (error: any) {
         res.status(500).json({ message: error.message || 'Failed to fetch retailers' });

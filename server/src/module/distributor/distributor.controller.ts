@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as distributorService from '../distributor/distributor.service.js';
-import type { DistributorParams, DistributorCreate, DistributorUpdate } from '../distributor/distributor.validator.js';
-import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import type { DistributorParams, DistributorCreate, DistributorUpdate, DistributorQuery } from '../distributor/distributor.validator.js';
 
 export const createDistributor = async (
     req: Request<unknown, unknown, DistributorCreate, unknown>,
@@ -54,13 +53,14 @@ export const deleteDistributor = async (
     }
 };
 
-export const getAllDistributors = async (
-    req: Request<unknown, unknown, unknown, PaginationQuery>,
+export const getDistributors = async (
+    req: Request<unknown, unknown, unknown, DistributorQuery>,
     res: Response
 ) => {
     try {
-        const { offset, limit } = req.query;
-        const distributors = await distributorService.getAllDistributors(Number(offset), Number(limit));
+        const { offset, limit, name } = req.query;
+        const filters = { name };
+        const distributors = await distributorService.getDistributors(Number(offset), Number(limit), filters);
         res.status(200).json(distributors);
     } catch (error: any) {
         res.status(500).json({ message: error.message || 'Failed to fetch distributors' });

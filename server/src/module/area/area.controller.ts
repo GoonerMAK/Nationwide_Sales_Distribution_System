@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as areaService from '../area/area.service.js';
-import type { AreaParams, AreaCreate, AreaUpdate } from '../area/area.validator.js';
-import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import type { AreaParams, AreaCreate, AreaUpdate, AreaQuery } from '../area/area.validator.js';
 
 export const createArea = async (
     req: Request<unknown, unknown, AreaCreate, unknown>,
@@ -54,13 +53,14 @@ export const deleteArea = async (
     }
 };
 
-export const getAllAreas = async (
-    req: Request<unknown, unknown, unknown, PaginationQuery>,
+export const getAreas = async (
+    req: Request<unknown, unknown, unknown, AreaQuery>,
     res: Response
 ) => {
     try {
-        const { offset, limit } = req.query;
-        const areas = await areaService.getAllAreas(Number(offset), Number(limit));
+        const { offset, limit, name, region_id } = req.query;
+        const filters = { name, region_id };
+        const areas = await areaService.getAreas(Number(offset), Number(limit), filters);
         res.status(200).json(areas);
     } catch (error: any) {
         res.status(500).json({ message: error.message || 'Failed to fetch areas' });
