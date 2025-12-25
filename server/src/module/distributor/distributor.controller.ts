@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import * as distributorService from '../distributor/distributor.service.js';
 import type { DistributorParams, DistributorCreate, DistributorUpdate, DistributorQuery } from '../distributor/distributor.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 
 export const createDistributor = async (
     req: Request<unknown, unknown, DistributorCreate, unknown>,
@@ -10,6 +11,10 @@ export const createDistributor = async (
     
     try {
         const newDistributor = await distributorService.createDistributor(name);
+
+        await invalidateCache('cache:/distributors*');
+        await invalidateCache('cache:/distributor/*');
+
         res.status(201).json(newDistributor);
     } catch (error: any) {
         res.status(400).json({ message: error.message || 'Failed to create distributor' });
@@ -25,6 +30,10 @@ export const updateDistributor = async (
     
     try {
         const updatedDistributor = await distributorService.updateDistributor(id, updates);
+
+        await invalidateCache('cache:/distributors*');
+        await invalidateCache(`cache:/distributor/${id}`);
+
         res.status(200).json(updatedDistributor);
     } catch (error: any) {
         if (error.message.includes('not found')) {
@@ -43,6 +52,10 @@ export const deleteDistributor = async (
     
     try {
         const deletedDistributor = await distributorService.deleteDistributor(id);
+
+        await invalidateCache('cache:/distributors*');
+        await invalidateCache(`cache:/distributor/${id}`);
+        
         res.status(200).json({ message: 'Distributor deleted successfully', distributor: deletedDistributor });
     } catch (error: any) {
         if (error.message.includes('not found')) {

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import * as retailerService from '../retailer/retailer.service.js';
 import type { RetailerParams, RetailerCreate, RetailerUpdate, RetailerQuery } from '../retailer/retailer.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 
 export const createRetailer = async (
     req: Request<unknown, unknown, RetailerCreate, unknown>,
@@ -30,6 +31,10 @@ export const createRetailer = async (
             sales_representative_id,
             routes
         );
+
+        await invalidateCache('cache:/retailers*');
+        await invalidateCache('cache:/retailer/*');
+
         res.status(201).json(newRetailer);
     } catch (error: any) {
         res.status(400).json({ message: error.message || 'Failed to create retailer' });
@@ -45,6 +50,10 @@ export const updateRetailer = async (
     
     try {
         const updatedRetailer = await retailerService.updateRetailer(id, updates);
+
+        await invalidateCache('cache:/retailers*');
+        await invalidateCache(`cache:/retailer/${id}`);
+
         res.status(200).json(updatedRetailer);
     } catch (error: any) {
         if (error.message.includes('not found')) {
@@ -63,6 +72,10 @@ export const deleteRetailer = async (
     
     try {
         const deletedRetailer = await retailerService.deleteRetailer(id);
+
+        await invalidateCache('cache:/retailers*');
+        await invalidateCache(`cache:/retailer/${id}`);
+        
         res.status(200).json({ message: 'Retailer deleted successfully', retailer: deletedRetailer });
     } catch (error: any) {
         if (error.message.includes('not found')) {

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import * as territoryService from '../territory/territory.service.js';
 import type { TerritoryParams, TerritoryCreate, TerritoryUpdate, TerritoryQuery } from '../territory/territory.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 
 export const createTerritory = async (
     req: Request<unknown, unknown, TerritoryCreate, unknown>,
@@ -10,6 +11,10 @@ export const createTerritory = async (
     
     try {
         const newTerritory = await territoryService.createTerritory(name, area_id);
+
+        await invalidateCache('cache:/territories*');
+        await invalidateCache('cache:/territory/*');
+
         res.status(201).json(newTerritory);
     } catch (error: any) {
         res.status(400).json({ message: error.message || 'Failed to create territory' });
@@ -25,6 +30,10 @@ export const updateTerritory = async (
     
     try {
         const updatedTerritory = await territoryService.updateTerritory(id, updates);
+
+        await invalidateCache('cache:/territories*');
+        await invalidateCache(`cache:/territory/${id}`);
+
         res.status(200).json(updatedTerritory);
     } catch (error: any) {
         if (error.message.includes('not found')) {
@@ -43,6 +52,10 @@ export const deleteTerritory = async (
     
     try {
         const deletedTerritory = await territoryService.deleteTerritory(id);
+
+        await invalidateCache('cache:/territories*');
+        await invalidateCache(`cache:/territory/${id}`);
+        
         res.status(200).json({ message: 'Territory deleted successfully', territory: deletedTerritory });
     } catch (error: any) {
         if (error.message.includes('not found')) {
