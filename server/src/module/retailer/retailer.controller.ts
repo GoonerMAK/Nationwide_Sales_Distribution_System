@@ -91,8 +91,8 @@ export const getRetailers = async (
     res: Response
 ) => {
     try {
-        const { offset, limit, name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id } = req.query;
-        const filters = { name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id };
+        const { offset, limit, name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id, assigned } = req.query;
+        const filters = { name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id, assigned };
         const retailers = await retailerService.getRetailers(Number(offset), Number(limit), filters);
         res.status(200).json(retailers);
     } catch (error: any) {

@@ -134,6 +134,7 @@ export const getRetailers = async (
         distributor_id?: string;
         territory_id?: string;
         sales_representative_id?: string;
+        assigned?: boolean;
     }
 ) => {
     const where: any = {};
@@ -158,6 +159,11 @@ export const getRetailers = async (
     }
     if (filters?.sales_representative_id) {
         where.sales_representative_id = filters.sales_representative_id;
+    }
+    if (filters?.assigned === true) {
+        where.NOT = { sales_representative_id: null };
+    } else if (filters?.assigned === false) {
+        where.sales_representative_id = null; 
     }
 
     const [retailers, totalCount] = await prisma.$transaction([
