@@ -98,3 +98,133 @@ Commands in order:
 | GET | `/territories` | Get all territories (default: offset=0, limit=10) | Yes |
 | GET | `/territories?name={name}&area_id={uuid}&offset={number}&limit={number}` | Get territories with query filters | Yes |
 | GET | `/territory/:id` | Get territory by ID | Yes |
+
+
+## Postman Setup & Usage Guide
+
+### 1. Sign Up (Create New Account)
+
+Create a new user account:
+```
+POST /auth/signup
+```
+
+**Request Body (JSON):**
+```json
+{
+  "email": "email@example.com",
+  "password": "your_password"
+}
+```
+
+**Response:** 201 Created
+
+---
+
+### 2. Login
+
+Login with your credentials:
+```
+POST /auth/login
+```
+
+**Request Body (JSON):**
+```json
+{
+  "email": "same_email@example.com",
+  "password": "your_password"
+}
+```
+
+**Response:** 200 OK
+
+You will receive a JWT token that looks like this:
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDcxMC05OGNjLThkNmNmY2Q5YjUwZCIsImlhdCI6MTc2NjY4NDU0MywiZXhwIjoxNzY2OTQzNzQzfQ.DeBwuVVSgmLj8Ikn2NqUKTUO5SaW801OVquAZyAJxII
+```
+
+The JWT token consists of three parts separated by periods:
+- **Header**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9`
+- **Payload**: `eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDcxMC05OGNjLThkNmNmY2Q5YjUwZCIsImlhdCI6MTc2NjY4NDU0MywiZXhwIjoxNzY2OTQzNzQzfQ`
+- **Signature**: `DeBwuVVSgmLj8Ikn2NqUKTUO5SaW801OVquAZyAJxII`
+
+**Important:** Copy this entire token for use in subsequent requests via Postman
+
+---
+
+### 3. Setting Up Authentication for Subsequent Requests in Postman
+
+You are now logged in. To authenticate your requests:
+
+1. Go to the **Headers** tab in your request
+2. Add a new header:
+   - **Key**: `Cookie`
+   - **Value**: `jwt=YOUR_TOKEN_HERE`
+
+**Example:**
+```
+Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDcxMC05OGNjLThkNmNmY2Q5YjUwZCIsImlhdCI6MTc2NjY4NDU0MywiZXhwIjoxNzY2OTQzNzQzfQ.DeBwuVVSgmLj8Ikn2NqUKTUO5SaW801OVquAZyAJxII
+```
+
+---
+
+### 4. Verify Authentication
+
+Check if you are currently authenticated:
+```
+GET /auth/user
+```
+
+**Headers:**
+```
+Cookie: jwt=YOUR_TOKEN_HERE
+```
+
+**Response:**
+- **Status Code 200**: You are authenticated successfully
+- The response will contain your user information
+
+---
+
+### 5. Making Authenticated Requests
+
+**All subsequent requests require authentication.** Always include the Cookie header with your JWT token.
+
+#### Example: Get All Regions
+```
+GET /regions
+Headers:
+  Cookie: jwt=YOUR_TOKEN_HERE
+```
+
+#### Example: Create a New Area
+```
+POST /area
+Headers:
+  Cookie: jwt=YOUR_TOKEN_HERE
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "name": "Agargaon",
+  "region_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+#### Example: Get Retailers with Filters
+```
+GET /retailers?region_id=550e8400-e29b-41d4-a716-446655440000&assigned=true
+Headers:
+  Cookie: jwt=YOUR_TOKEN_HERE
+```
+
+---
+
+### Quick Reference
+
+| Step | Endpoint | Method | Authentication Required |
+|------|----------|--------|------------------------|
+| 1. Sign Up | `/auth/signup` | POST | No |
+| 2. Login | `/auth/login` | POST | No |
+| 3. Verify Auth | `/auth/user` | GET | Yes (Cookie with JWT) |
+| 4. All Other APIs | Various | Various | Yes (Cookie with JWT) |
