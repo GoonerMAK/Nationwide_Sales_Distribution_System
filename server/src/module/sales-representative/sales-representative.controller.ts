@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as salesRepresentativeService from './sales-representative.service.js';
-import type { SalesRepresentativeParams, SalesRepresentativeCreate, SalesRepresentativeUpdate } from './sales-representative.validator.js';
-import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import type { SalesRepresentativeParams, SalesRepresentativeCreate, SalesRepresentativeUpdate, SalesRepresentativeQuery } from './sales-representative.validator.js';
 
 export const createSalesRepresentative = async (
     req: Request<unknown, unknown, SalesRepresentativeCreate, unknown>,
@@ -70,13 +69,14 @@ export const deleteSalesRepresentative = async (
     }
 };
 
-export const getAllSalesRepresentatives = async (
-    req: Request<unknown, unknown, unknown, PaginationQuery>,
+export const getSalesRepresentatives = async (
+    req: Request<unknown, unknown, unknown, SalesRepresentativeQuery>,
     res: Response
 ) => {
     try {
-        const { offset, limit } = req.query;
-        const salesRepresentatives = await salesRepresentativeService.getAllSalesRepresentatives(Number(offset), Number(limit));
+        const { offset, limit, username, name, phone, region_id, area_id, territory_id } = req.query;
+        const filters = { username, name, phone, region_id, area_id, territory_id };
+        const salesRepresentatives = await salesRepresentativeService.getSalesRepresentatives(Number(offset), Number(limit), filters);
         res.status(200).json(salesRepresentatives);
     } catch (error: any) {
         res.status(500).json({ message: error.message || 'Failed to fetch sales representatives' });

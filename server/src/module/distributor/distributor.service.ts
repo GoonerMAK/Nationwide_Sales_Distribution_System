@@ -52,9 +52,20 @@ export const deleteDistributor = async (id: string) => {
     return prisma.distributor.delete({ where: { id } });
 };
 
-export const getAllDistributors = async (offset: number, limit: number) => {
+export const getDistributors = async (
+    offset: number,
+    limit: number,
+    filters?: { name?: string }
+) => {
+    const where: any = {};
+    
+    if (filters?.name) {
+        where.name = { contains: filters.name, mode: 'insensitive' };
+    }
+
     const [distributors, totalCount] = await prisma.$transaction([
         prisma.distributor.findMany({
+            where,
             skip: offset,
             take: limit,
             select: {
@@ -64,7 +75,7 @@ export const getAllDistributors = async (offset: number, limit: number) => {
                 updated_at: true,
             },
         }),
-        prisma.distributor.count(),
+        prisma.distributor.count({ where }),
     ]);
 
     return {

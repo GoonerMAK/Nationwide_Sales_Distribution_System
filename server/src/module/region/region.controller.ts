@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as regionService from '../region/region.service.js';
-import type { RegionParams, RegionCreate, RegionUpdate } from '../region/region.validator.js';
-import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import type { RegionParams, RegionCreate, RegionUpdate, RegionQuery } from '../region/region.validator.js';
 
 export const createRegion = async (
     req: Request<unknown, unknown, RegionCreate, unknown>,
@@ -54,13 +53,14 @@ export const deleteRegion = async (
     }
 };
 
-export const getAllRegions = async (
-    req: Request<unknown, unknown, unknown, PaginationQuery>,
+export const getRegions = async (
+    req: Request<unknown, unknown, unknown, RegionQuery>,
     res: Response
 ) => {
     try {
-        const { offset, limit } = req.query;
-        const regions = await regionService.getAllRegions(Number(offset), Number(limit));
+        const { offset, limit, name } = req.query;
+        const filters = { name };
+        const regions = await regionService.getRegions(Number(offset), Number(limit), filters);
         res.status(200).json(regions);
     } catch (error: any) {
         res.status(500).json({ message: error.message || 'Failed to fetch regions' });

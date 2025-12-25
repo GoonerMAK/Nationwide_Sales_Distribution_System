@@ -16,6 +16,24 @@ export const updateTerritorySchema = z.object({
     }),
 });
 
+export const territoryQuerySchema = z.object({
+    name: z.string().optional(),
+    area_id: z.uuid({ message: "Invalid area ID format" }).optional(),
+    offset: z.string()
+        .default('0')
+        .transform(val => parseInt(val, 10))
+        .refine(val => !isNaN(val) && val >= 0, { message: "Offset must be a non-negative number" })
+        .optional(),
+    limit: z.string()
+        .default('10')
+        .transform(val => parseInt(val, 10))
+        .refine(val => !isNaN(val) && val > 0 && val <= 100, { 
+            message: "Limit must be between 1 and 100" 
+        })
+        .optional(),
+});
+
 export type TerritoryParams = z.infer<typeof territoryParamsSchema>;
 export type TerritoryCreate = z.infer<typeof createTerritorySchema>;
 export type TerritoryUpdate = z.infer<typeof updateTerritorySchema>;
+export type TerritoryQuery = z.infer<typeof territoryQuerySchema>;

@@ -85,9 +85,26 @@ export const deleteTerritory = async (id: string) => {
     return prisma.territory.delete({ where: { id } });
 };
 
-export const getAllTerritories = async (offset: number, limit: number) => {
+export const getTerritories = async (
+    offset: number,
+    limit: number,
+    filters?: {
+        name?: string;
+        area_id?: string;
+    }
+) => {
+    const where: any = {};
+    
+    if (filters?.name) {
+        where.name = { contains: filters.name, mode: 'insensitive' };
+    }
+    if (filters?.area_id) {
+        where.area_id = filters.area_id;
+    }
+
     const [territories, totalCount] = await prisma.$transaction([
         prisma.territory.findMany({
+            where,
             skip: offset,
             take: limit,
             select: {
@@ -98,7 +115,7 @@ export const getAllTerritories = async (offset: number, limit: number) => {
                 updated_at: true,
             },
         }),
-        prisma.territory.count(),
+        prisma.territory.count({ where }),
     ]);
 
     return {

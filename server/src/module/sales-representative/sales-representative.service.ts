@@ -129,9 +129,42 @@ export const deleteSalesRepresentative = async (id: string) => {
     return prisma.salesRepresentative.delete({ where: { id } });
 };
 
-export const getAllSalesRepresentatives = async (offset: number, limit: number) => {
+export const getSalesRepresentatives = async (
+    offset: number,
+    limit: number,
+    filters?: {
+        username?: string;
+        name?: string;
+        phone?: string;
+        region_id?: string;
+        area_id?: string;
+        territory_id?: string;
+    }
+) => {
+    const where: any = {};
+    
+    if (filters?.username) {
+        where.username = { contains: filters.username, mode: 'insensitive' };
+    }
+    if (filters?.name) {
+        where.name = { contains: filters.name, mode: 'insensitive' };
+    }
+    if (filters?.phone) {
+        where.phone = { contains: filters.phone };
+    }
+    if (filters?.region_id) {
+        where.region_id = filters.region_id;
+    }
+    if (filters?.area_id) {
+        where.area_id = filters.area_id;
+    }
+    if (filters?.territory_id) {
+        where.territory_id = filters.territory_id;
+    }
+
     const [salesReps, totalCount] = await prisma.$transaction([
         prisma.salesRepresentative.findMany({
+            where,
             skip: offset,
             take: limit,
             select: {
@@ -147,7 +180,7 @@ export const getAllSalesRepresentatives = async (offset: number, limit: number) 
                 updated_at: true,
             },
         }),
-        prisma.salesRepresentative.count(),
+        prisma.salesRepresentative.count({ where }),
     ]);
 
     return {

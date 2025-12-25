@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as territoryService from '../territory/territory.service.js';
-import type { TerritoryParams, TerritoryCreate, TerritoryUpdate } from '../territory/territory.validator.js';
-import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import type { TerritoryParams, TerritoryCreate, TerritoryUpdate, TerritoryQuery } from '../territory/territory.validator.js';
 
 export const createTerritory = async (
     req: Request<unknown, unknown, TerritoryCreate, unknown>,
@@ -54,13 +53,14 @@ export const deleteTerritory = async (
     }
 };
 
-export const getAllTerritories = async (
-    req: Request<unknown, unknown, unknown, PaginationQuery>,
+export const getTerritories = async (
+    req: Request<unknown, unknown, unknown, TerritoryQuery>,
     res: Response
 ) => {
     try {
-        const { offset, limit } = req.query;
-        const territories = await territoryService.getAllTerritories(Number(offset), Number(limit));
+        const { offset, limit, name, area_id } = req.query;
+        const filters = { name, area_id };
+        const territories = await territoryService.getTerritories(Number(offset), Number(limit), filters);
         res.status(200).json(territories);
     } catch (error: any) {
         res.status(500).json({ message: error.message || 'Failed to fetch territories' });

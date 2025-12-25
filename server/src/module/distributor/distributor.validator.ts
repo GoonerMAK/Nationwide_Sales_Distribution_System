@@ -14,6 +14,23 @@ export const updateDistributorSchema = z.object({
     }),
 });
 
+export const distributorQuerySchema = z.object({
+    name: z.string().optional(),
+    offset: z.string()
+        .default('0')
+        .transform(val => parseInt(val, 10))
+        .refine(val => !isNaN(val) && val >= 0, { message: "Offset must be a non-negative number" })
+        .optional(),
+    limit: z.string()
+        .default('10')
+        .transform(val => parseInt(val, 10))
+        .refine(val => !isNaN(val) && val > 0 && val <= 100, { 
+            message: "Limit must be between 1 and 100" 
+        })
+        .optional(),
+});
+
 export type DistributorParams = z.infer<typeof distributorParamsSchema>;
 export type DistributorCreate = z.infer<typeof createDistributorSchema>;
 export type DistributorUpdate = z.infer<typeof updateDistributorSchema>;
+export type DistributorQuery = z.infer<typeof distributorQuerySchema>;
