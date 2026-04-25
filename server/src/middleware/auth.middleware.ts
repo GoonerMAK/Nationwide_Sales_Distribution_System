@@ -1,18 +1,20 @@
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
+import { env } from '../config/env.js';
+import { UnauthorizedError } from '../utils/errors.js';
 
-export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    const token = req.cookies.jwt;
-    
-    if (!token) {
-        return res.status(401).json({ message: 'Access denied. No token provided.' });
-    }
+export function isAuthenticated(req: Request, _res: Response, next: NextFunction): void {
+  const token = req.cookies.jwt as string | undefined;
 
-    try {
-        const decodedToken = jwt.verify(token, process.env.SECRET!) as jwt.JwtPayload;
-        req.user = decodedToken;
-        next(); 
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid token.' });
-    }
-}   
+  if (!token) {
+    throw new UnauthorizedError('Access denied. No token provided.');
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
+    req.user = decoded;
+    next();
+  } catch {
+    throw new UnauthorizedError('Invalid or expired token.');
+  }
+}
