@@ -1,70 +1,53 @@
 import type { Request, Response } from 'express';
 import * as authService from './auth.service.js';
 import type { AuthLogin, AuthSignup } from './auth.validator.js';
+import { sendSuccess, sendCreated } from '../../utils/response.js';
+import { env } from '../../config/env.js';
+import { UnauthorizedError } from '../../utils/errors.js';
 
+const COOKIE_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 export const signUp = async (
-    req: Request<unknown, unknown, AuthSignup, unknown>,
-    res: Response
+  req: Request<unknown, unknown, AuthSignup, unknown>,
+  res: Response,
 ) => {
-    const { email, password } = req.body;
-
-    try {
-        const result = await authService.signUp(email, password);
-        res.status(201).json(result);
-    } catch (error: any) {
-        res.status(400).json({ message: error.message  || 'Failed to sign up' });
-    }
+  const { email, password } = req.body;
+  const result = await authService.signUp(email, password);
+  sendCreated(res, result);
 };
 
 export const logIn = async (
-    req: Request<unknown, unknown, AuthLogin, unknown>,
-    res: Response
+  req: Request<unknown, unknown, AuthLogin, unknown>,
+  res: Response,
 ) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  const { user, token } = await authService.logIn(email, password);
 
-    try {
-        const { user, token } = await authService.logIn(email, password);
+  res.cookie('jwt', token, {
+    httpOnly: true,
+    maxAge: COOKIE_MAX_AGE,
+    sameSite: 'strict',
+    secure: env.isProd,
+  });
 
-        res.cookie('jwt', token, {
-            httpOnly: true,
-            maxAge: 3 * 24 * 60 * 60 * 1000,
-            sameSite: 'strict',
-            secure: process.env.NODE_ENV === 'production',
-        });
-
-        res.status(200).json({ user, token });
-    } catch (error: any) {
-        res.status(400).json({ message: error.message || 'Failed to log in' });
-    }
+  sendSuccess(res, { user, token });
 };
 
+export const getAuthenticatedUser = async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new UnauthorizedError('Not authenticated');
+  }
 
-export const getAuthenticatedUser = async (
-    req: Request,
-    res: Response
-) => {
-    try {
-        if (!req.user?.id) {
-            return res.status(401).json({ message: 'Not authenticated' });
-        }
-
-        const user = await authService.getAuthenticatedUser(req.user.id);
-        res.status(200).json({ user });
-    } catch (error: any) {
-        res.status(500).json({ message: error.message || 'Failed to fetch user' });
-    }
+  const user = await authService.getAuthenticatedUser(req.user.id as string);
+  sendSuccess(res, { user });
 };
 
+export const logOut = async (_req: Request, res: Response) => {
+  res.clearCookie('jwt', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: env.isProd,
+  });
 
-export const logOut = async (
-    _req: Request,
-    res: Response
-) => {
-    res.clearCookie('jwt', {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-    });
-    res.status(200).json({ message: 'Logged out successfully' });
+  sendSuccess(res, { message: 'Logged out successfully' });
 };
