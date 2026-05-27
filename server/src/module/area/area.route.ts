@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as areaController from './area.controller.js';
-import { isAuthenticated } from '../../middleware/auth.middleware.js'; 
+import { isAuthenticated } from '../../middleware/auth.middleware.js';
 import { validateRequest, validateParams, validateQuery } from '../../middleware/validator.middleware.js';
 import { createAreaSchema, updateAreaSchema, areaParamsSchema, areaQuerySchema } from './area.validator.js';
 import { cacheMiddleware } from '../../middleware/cache.middleware.js';
