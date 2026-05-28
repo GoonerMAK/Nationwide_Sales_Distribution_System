@@ -1,99 +1,71 @@
 import type { Request, Response } from 'express';
-import * as areaService from '../area/area.service.js';
-import type { AreaParams, AreaCreate, AreaUpdate, AreaQuery } from '../area/area.validator.js';
+import * as areaService from './area.service.js';
+import type { AreaParams, AreaCreate, AreaUpdate, AreaQuery } from './area.validator.js';
 import { invalidateCache } from '../../middleware/cache.middleware.js';
+import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
+/** POST /area — Create a new area. */
 export const createArea = async (
-    req: Request<unknown, unknown, AreaCreate, unknown>,
-    res: Response
+  req: Request<unknown, unknown, AreaCreate, unknown>,
+  res: Response,
 ) => {
-    const { name, region_id } = req.body;
-    
-    try {
-        const newArea = await areaService.createArea(name, region_id);
+  const { name, region_id } = req.body;
+  const newArea = await areaService.createArea(name, region_id);
 
-        await invalidateCache('cache:/areas*');
-        await invalidateCache('cache:/area/*');
+  await invalidateCache('/areas*');
+  await invalidateCache('/area/*');
 
-        res.status(201).json(newArea);
-    } catch (error: any) {
-        res.status(400).json({ message: error.message || 'Failed to create area' });
-    }
+  sendCreated(res, newArea);
 };
 
+/** PUT /area/:id — Update an area. */
 export const updateArea = async (
-    req: Request<AreaParams, unknown, AreaUpdate, unknown>,
-    res: Response
+  req: Request<AreaParams, unknown, AreaUpdate, unknown>,
+  res: Response,
 ) => {
-    const { id } = req.params;
-    const updates = req.body.data;
-    
-    try {
-        const updatedArea = await areaService.updateArea(id, updates);
-        
-        await invalidateCache('cache:/areas*');
-        await invalidateCache(`cache:/area/${id}`);
+  const { id } = req.params;
+  const updates = req.body.data;
+  const updatedArea = await areaService.updateArea(id, updates);
 
-        res.status(200).json(updatedArea);
-    } catch (error: any) {
-        if (error.message.includes('not found')) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(400).json({ message: error.message || 'Failed to update area' });
-        }
-    }
+  await invalidateCache('/areas*');
+  await invalidateCache(`/area/${id}`);
+
+  sendSuccess(res, updatedArea);
 };
 
+/** DELETE /area/:id — Delete an area. */
 export const deleteArea = async (
-    req: Request<AreaParams, unknown, unknown, unknown>,
-    res: Response
+  req: Request<AreaParams, unknown, unknown, unknown>,
+  res: Response,
 ) => {
-    const { id } = req.params;
-    
-    try {
-        const deletedArea = await areaService.deleteArea(id);
+  const { id } = req.params;
+  await areaService.deleteArea(id);
 
-        await invalidateCache('cache:/areas*');
-        await invalidateCache(`cache:/area/${id}`);
+  await invalidateCache('/areas*');
+  await invalidateCache(`/area/${id}`);
 
-        res.status(200).json({ message: 'Area deleted successfully', area: deletedArea });
-    } catch (error: any) {
-        if (error.message.includes('not found')) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(400).json({ message: error.message || 'Failed to delete area' });
-        }
-    }
+  sendDeleted(res, 'Area deleted successfully');
 };
 
+/** GET /areas — List areas with pagination and filters. */
 export const getAreas = async (
-    req: Request<unknown, unknown, unknown, AreaQuery>,
-    res: Response
+  req: Request<unknown, unknown, unknown, AreaQuery>,
+  res: Response,
 ) => {
-    try {
-        const { offset, limit, name, region_id } = req.query;
-        const filters = { name, region_id };
-        const areas = await areaService.getAreas(Number(offset), Number(limit), filters);
-        res.status(200).json(areas);
-    } catch (error: any) {
-        res.status(500).json({ message: error.message || 'Failed to fetch areas' });
-    }
+  const { offset, limit, name, region_id } = req.query;
+  const filters = { name, region_id };
+  const result = await areaService.getAreas(Number(offset), Number(limit), filters);
+
+  sendPaginated(res, result.data, result.pagination);
 };
 
+/** GET /area/:id — Get a single area by ID. */
 export const getAreaById = async (
-    req: Request<AreaParams, unknown, unknown, unknown>,
-    res: Response
+  req: Request<AreaParams, unknown, unknown, unknown>,
+  res: Response,
 ) => {
-    const { id } = req.params;
-    
-    try {
-        const area = await areaService.getAreaById(id);
-        res.status(200).json(area);
-    } catch (error: any) {
-        if (error.message.includes('not found')) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: error.message || 'Failed to fetch area' });
-        }
-    }
+  const { id } = req.params;
+  const area = await areaService.getAreaById(id);
+
+  sendSuccess(res, area);
 };
