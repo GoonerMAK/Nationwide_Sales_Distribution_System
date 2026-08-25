@@ -12,6 +12,7 @@ import { HTTP_STATUS } from './constants/http-status.js';
 import { authRouter } from './module/auth/auth.routes.js';
 import { userRouter } from './module/user/user.route.js';
 import { territoryRouter } from './module/territory/territory.route.js';
+import { regionRouter } from './module/region/region.route.js';
 import { areaRouter } from './module/area/area.route.js';
 import { distributorRouter } from './module/distributor/distributor.route.js';
 import { retailerRouter } from './module/retailer/retailer.route.js';
@@ -38,6 +39,7 @@ app.get('/health', (_req, res) => {
 // Routes
 app.use('/auth', authRouter);
 app.use('', userRouter);
+app.use('', regionRouter);
 app.use('', territoryRouter);
 app.use('', areaRouter);
 app.use('', distributorRouter);

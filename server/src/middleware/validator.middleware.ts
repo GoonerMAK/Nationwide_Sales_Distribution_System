@@ -15,7 +15,12 @@ function validate(source: ValidationSource, schema: z.ZodTypeAny) {
       } else if (source === 'params') {
         req.params = parsed as Record<string, string>;
       } else {
-        req.query = parsed as Record<string, string>;
+        Object.defineProperty(req, 'query', {
+          value: parsed,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
       }
 
       next();
