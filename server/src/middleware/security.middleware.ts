@@ -19,7 +19,9 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
 /** CORS middleware with configurable allowed origins. */
 export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const origin = req.headers.origin || '';
-  const allowedOrigins = env.isDev ? ['http://localhost:3000', 'http://localhost:5173'] : [];
+  const allowedOrigins = env.isDev
+    ? ['http://localhost:3000', 'http://localhost:5173', env.FRONTEND_URL]
+    : [env.FRONTEND_URL];
 
   if (env.isDev || allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
