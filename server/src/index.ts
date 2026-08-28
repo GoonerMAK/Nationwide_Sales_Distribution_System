@@ -28,23 +28,25 @@ app.use(rateLimiter());
 app.use(express.json());
 app.use(cookieParser());
 
-// Health check
-app.get('/health', (_req, res) => {
+// Health check (served at both /health and /api/health)
+app.get(['/health', '/api/health'], (_req, res) => {
   res.status(HTTP_STATUS.OK).json({
     success: true,
     data: { status: 'ok', uptime: process.uptime() },
   });
 });
 
-// Routes
-app.use('/auth', authRouter);
-app.use('', userRouter);
-app.use('', regionRouter);
-app.use('', territoryRouter);
-app.use('', areaRouter);
-app.use('', distributorRouter);
-app.use('', retailerRouter);
-app.use('', salesRepresentativeRouter);
+// Routes (all API routes live under /api; /health stays at the root for probes)
+const API_PREFIX = '/api';
+
+app.use(`${API_PREFIX}/auth`, authRouter);
+app.use(API_PREFIX, userRouter);
+app.use(API_PREFIX, regionRouter);
+app.use(API_PREFIX, territoryRouter);
+app.use(API_PREFIX, areaRouter);
+app.use(API_PREFIX, distributorRouter);
+app.use(API_PREFIX, retailerRouter);
+app.use(API_PREFIX, salesRepresentativeRouter);
 
 // 404 handler
 app.use((_req, res) => {

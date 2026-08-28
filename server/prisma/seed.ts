@@ -205,8 +205,6 @@ async function main() {
     const currentBatch = Math.min(retailerBatchSize, totalRetailers - i);
     
     for (let j = 0; j < currentBatch; j++) {
-      const idx = i + j;
-      
       let salesRep = shuffledSalesReps[salesRepIndex];
       if (retailersPerRep >= 70) {
         salesRepIndex++;

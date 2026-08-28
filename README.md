@@ -2,21 +2,49 @@
 An app that would help sale representatives (SRs) sell products to retailers across a nation. Each SR will be assigned to a list of retailers from a nationwide pool of ~millions. This project focuses on data modelling, performance and scalability. Scalability in terms of software design, root-level performance, readability and maintainability
 
 
-Commands in order:
+## Prerequisites
 
-1. docker compose up -d (rename .env.example to .env and set the values accordingly)
+- Node.js 20+
+- Docker (for Postgres and Redis)
 
-2. cd server
+## Setup
 
-3. npm install
+```bash
+# 1. Environment files - copy each example and fill in the values
+cp .env.example .env                  # docker-compose credentials (postgres user/password/db)
+cp server/.env.example server/.env    # DATABASE_URL, SECRET, PORT, REDIS_URL, FRONTEND_URL
+cp client/.env.example client/.env.local
 
-4. npx prisma generate
+# 2. Start Postgres + Redis (both have healthchecks, so `up -d` waits until they are ready)
+npm run db:up
 
-5. npx prisma migrate deploy
+# 3. Install dependencies for server and client
+npm install          # root runner (concurrently)
+npm run install:all
 
-6. npm run seed (to populate the database)
+# 4. Apply migrations and seed the database
+npm run db:setup
 
-7. npm run dev
+# 5. Run both apps (server on PORT, client on 3000)
+npm run dev
+```
+
+### Useful scripts
+
+| Command | What it does |
+|---------|--------------|
+| `npm run dev` | Runs server and client together |
+| `npm run dev:server` / `npm run dev:client` | Runs one of them |
+| `npm run build` | Builds both |
+| `npm run lint` | Lints both |
+| `npm run typecheck` | Type-checks the server |
+| `npm run db:up` / `npm run db:down` | Starts / stops Postgres + Redis |
+| `npm run db:setup` | `prisma migrate deploy` + seed |
+| `npm run prisma:studio --prefix server` | Opens Prisma Studio |
+
+The server also exposes a health check at `GET /health` (also available as `GET /api/health`).
+
+> **Note:** all API routes are mounted under the `/api` prefix, e.g. `POST /api/auth/login`.
 
 
 
@@ -27,77 +55,77 @@ Commands in order:
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/auth/signup` | Register a new user | No |
-| POST | `/auth/login` | Login user | No |
-| POST | `/auth/logout` | Logout user | No |
-| GET | `/auth/user` | Get authenticated user details | Yes |
+| POST | `/api/auth/signup` | Register a new user | No |
+| POST | `/api/auth/login` | Login user | No |
+| POST | `/api/auth/logout` | Logout user | No |
+| GET | `/api/auth/user` | Get authenticated user details | Yes |
 
 ### Area APIs
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/area` | Create a new area | Yes |
-| PUT | `/area/:id` | Update an existing area | Yes |
-| DELETE | `/area/:id` | Delete an area | Yes |
-| GET | `/areas` | Get all areas (default: offset=0, limit=10) | Yes |
-| GET | `/areas?region_id={uuid}&offset={number}&limit={number}` | Get areas with query filters | Yes |
-| GET | `/area/:id` | Get area by ID | Yes |
+| POST | `/api/area` | Create a new area | Yes |
+| PUT | `/api/area/:id` | Update an existing area | Yes |
+| DELETE | `/api/area/:id` | Delete an area | Yes |
+| GET | `/api/areas` | Get all areas (default: offset=0, limit=10) | Yes |
+| GET | `/api/areas?region_id={uuid}&offset={number}&limit={number}` | Get areas with query filters | Yes |
+| GET | `/api/area/:id` | Get area by ID | Yes |
 
 ### Distributor APIs
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/distributor` | Create a new distributor | Yes |
-| PUT | `/distributor/:id` | Update an existing distributor | Yes |
-| DELETE | `/distributor/:id` | Delete a distributor | Yes |
-| GET | `/distributors` | Get all distributors (default: offset=0, limit=10) | Yes |
-| GET | `/distributors?name={name}&offset={number}&limit={number}` | Get distributors with query filters | Yes |
-| GET | `/distributor/:id` | Get distributor by ID | Yes |
+| POST | `/api/distributor` | Create a new distributor | Yes |
+| PUT | `/api/distributor/:id` | Update an existing distributor | Yes |
+| DELETE | `/api/distributor/:id` | Delete a distributor | Yes |
+| GET | `/api/distributors` | Get all distributors (default: offset=0, limit=10) | Yes |
+| GET | `/api/distributors?name={name}&offset={number}&limit={number}` | Get distributors with query filters | Yes |
+| GET | `/api/distributor/:id` | Get distributor by ID | Yes |
 
 ### Region APIs
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/region` | Create a new region | Yes |
-| PUT | `/region/:id` | Update an existing region | Yes |
-| DELETE | `/region/:id` | Delete a region | Yes |
-| GET | `/regions` | Get all regions (default: offset=0, limit=10) | Yes |
-| GET | `/regions?name={name}&offset={number}&limit={number}` | Get regions with query filters | Yes |
-| GET | `/region/:id` | Get region by ID | Yes |
+| POST | `/api/region` | Create a new region | Yes |
+| PUT | `/api/region/:id` | Update an existing region | Yes |
+| DELETE | `/api/region/:id` | Delete a region | Yes |
+| GET | `/api/regions` | Get all regions (default: offset=0, limit=10) | Yes |
+| GET | `/api/regions?name={name}&offset={number}&limit={number}` | Get regions with query filters | Yes |
+| GET | `/api/region/:id` | Get region by ID | Yes |
 
 ### Retailer APIs
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/retailer` | Create a new retailer | Yes |
-| PUT | `/retailer/:id` | Update an existing retailer | Yes |
-| DELETE | `/retailer/:id` | Delete a retailer | Yes |
-| GET | `/retailers` | Get all retailers (default: offset=0, limit=10) | Yes |
-| GET | `/retailers?&assigned={true}` | Get all assigned retailers (default: offset=0, limit=10) | Yes |
-| GET | `/retailers?distributor_id={uuid}&territory_id={uuid}&point={point}&offset={number}&limit={number}` | Get retailers with query filters | Yes |
-| GET | `/retailer/:id` | Get retailer by ID | Yes |
+| POST | `/api/retailer` | Create a new retailer | Yes |
+| PUT | `/api/retailer/:id` | Update an existing retailer | Yes |
+| DELETE | `/api/retailer/:id` | Delete a retailer | Yes |
+| GET | `/api/retailers` | Get all retailers (default: offset=0, limit=10) | Yes |
+| GET | `/api/retailers?&assigned={true}` | Get all assigned retailers (default: offset=0, limit=10) | Yes |
+| GET | `/api/retailers?distributor_id={uuid}&territory_id={uuid}&point={point}&offset={number}&limit={number}` | Get retailers with query filters | Yes |
+| GET | `/api/retailer/:id` | Get retailer by ID | Yes |
 
 ### Sales Representative APIs
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/sales-representative` | Create a new sales representative | Yes |
-| PUT | `/sales-representative/:id` | Update an existing sales representative | Yes |
-| DELETE | `/sales-representative/:id` | Delete a sales representative | Yes |
-| GET | `/sales-representatives` | Get all sales representatives (default: offset=0, limit=10) | Yes |
-| GET | `/sales-representatives?username={username}&territory_id={uuid}&offset={number}&limit={number}` | Get sales representatives with query filters | Yes |
-| GET | `/sales-representative/:id` | Get sales representative by ID | Yes |
+| POST | `/api/sales-representative` | Create a new sales representative | Yes |
+| PUT | `/api/sales-representative/:id` | Update an existing sales representative | Yes |
+| DELETE | `/api/sales-representative/:id` | Delete a sales representative | Yes |
+| GET | `/api/sales-representatives` | Get all sales representatives (default: offset=0, limit=10) | Yes |
+| GET | `/api/sales-representatives?username={username}&territory_id={uuid}&offset={number}&limit={number}` | Get sales representatives with query filters | Yes |
+| GET | `/api/sales-representative/:id` | Get sales representative by ID | Yes |
 
 ### Territory APIs
 
 | Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|----------------|
-| POST | `/territory` | Create a new territory | Yes |
-| PUT | `/territory/:id` | Update an existing territory | Yes |
-| DELETE | `/territory/:id` | Delete a territory | Yes |
-| GET | `/territories` | Get all territories (default: offset=0, limit=10) | Yes |
-| GET | `/territories?name={name}&area_id={uuid}&offset={number}&limit={number}` | Get territories with query filters | Yes |
-| GET | `/territory/:id` | Get territory by ID | Yes |
+| POST | `/api/territory` | Create a new territory | Yes |
+| PUT | `/api/territory/:id` | Update an existing territory | Yes |
+| DELETE | `/api/territory/:id` | Delete a territory | Yes |
+| GET | `/api/territories` | Get all territories (default: offset=0, limit=10) | Yes |
+| GET | `/api/territories?name={name}&area_id={uuid}&offset={number}&limit={number}` | Get territories with query filters | Yes |
+| GET | `/api/territory/:id` | Get territory by ID | Yes |
 
 
 ## Postman Setup & Usage Guide
@@ -106,7 +134,7 @@ Commands in order:
 
 Create a new user account:
 ```
-POST /auth/signup
+POST /api/auth/signup
 ```
 
 **Request Body (JSON):**
@@ -125,7 +153,7 @@ POST /auth/signup
 
 Login with your credentials:
 ```
-POST /auth/login
+POST /api/auth/login
 ```
 
 **Request Body (JSON):**
@@ -140,13 +168,13 @@ POST /auth/login
 
 You will receive a JWT token that looks like this:
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDcxMC05OGNjLThkNmNmY2Q5YjUwZCIsImlhdCI6MTc2NjY4NDU0MywiZXhwIjoxNzY2OTQzNzQzfQ.DeBwuVVSgmLj8Ikn2NqUKTUO5SaW801OVquAZyAJxII
+<HEADER>.<PAYLOAD>.<SIGNATURE>
 ```
 
 The JWT token consists of three parts separated by periods:
-- **Header**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9`
-- **Payload**: `eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDcxMC05OGNjLThkNmNmY2Q5YjUwZCIsImlhdCI6MTc2NjY4NDU0MywiZXhwIjoxNzY2OTQzNzQzfQ`
-- **Signature**: `DeBwuVVSgmLj8Ikn2NqUKTUO5SaW801OVquAZyAJxII`
+- **Header**: `<HEADER>`
+- **Payload**: `<PAYLOAD>`
+- **Signature**: `<SIGNATURE>`
 
 **Important:** Copy this entire token for use in subsequent requests via Postman
 
@@ -163,7 +191,7 @@ You are now logged in. To authenticate your requests:
 
 **Example:**
 ```
-Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDcxMC05OGNjLThkNmNmY2Q5YjUwZCIsImlhdCI6MTc2NjY4NDU0MywiZXhwIjoxNzY2OTQzNzQzfQ.DeBwuVVSgmLj8Ikn2NqUKTUO5SaW801OVquAZyAJxII
+Cookie: jwt=<HEADER>.<PAYLOAD>.<SIGNATURE>
 ```
 
 ---
@@ -172,7 +200,7 @@ Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0NDIyMzA4LWI0OTAtNDc
 
 Check if you are currently authenticated:
 ```
-GET /auth/user
+GET /api/auth/user
 ```
 
 **Headers:**
@@ -192,14 +220,14 @@ Cookie: jwt=YOUR_TOKEN_HERE
 
 #### Example: Get All Regions
 ```
-GET /regions
+GET /api/regions
 Headers:
   Cookie: jwt=YOUR_TOKEN_HERE
 ```
 
 #### Example: Create a New Area
 ```
-POST /area
+POST /api/area
 Headers:
   Cookie: jwt=YOUR_TOKEN_HERE
   Content-Type: application/json
@@ -213,7 +241,7 @@ Body (JSON):
 
 #### Example: Get Retailers with Filters
 ```
-GET /retailers?region_id=550e8400-e29b-41d4-a716-446655440000&assigned=true
+GET /api/retailers?region_id=550e8400-e29b-41d4-a716-446655440000&assigned=true
 Headers:
   Cookie: jwt=YOUR_TOKEN_HERE
 ```
@@ -224,7 +252,7 @@ Headers:
 
 | Step | Endpoint | Method | Authentication Required |
 |------|----------|--------|------------------------|
-| 1. Sign Up | `/auth/signup` | POST | No |
-| 2. Login | `/auth/login` | POST | No |
-| 3. Verify Auth | `/auth/user` | GET | Yes (Cookie with JWT) |
+| 1. Sign Up | `/api/auth/signup` | POST | No |
+| 2. Login | `/api/auth/login` | POST | No |
+| 3. Verify Auth | `/api/auth/user` | GET | Yes (Cookie with JWT) |
 | 4. All Other APIs | Various | Various | Yes (Cookie with JWT) |
