@@ -5,7 +5,7 @@
   "description": "Monorepo runner for the Nationwide Sales Distribution System (server + client)",
   "scripts": {
     "install:all": "npm install --prefix server && npm install --prefix client",
-    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev": "concurrently --raw -k \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix server && npm run build --prefix client",
