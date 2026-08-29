@@ -2,98 +2,70 @@ import type { Request, Response } from 'express';
 import * as distributorService from '../distributor/distributor.service.js';
 import type { DistributorParams, DistributorCreate, DistributorUpdate, DistributorQuery } from '../distributor/distributor.validator.js';
 import { invalidateCache } from '../../middleware/cache.middleware.js';
+import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
+/** POST /distributor — Create a new distributor. */
 export const createDistributor = async (
-    req: Request<unknown, unknown, DistributorCreate, unknown>,
-    res: Response
+  req: Request<unknown, unknown, DistributorCreate, unknown>,
+  res: Response,
 ) => {
-    const { name } = req.body;
-    
-    try {
-        const newDistributor = await distributorService.createDistributor(name);
+  const { name } = req.body;
+  const newDistributor = await distributorService.createDistributor(name);
 
-        await invalidateCache('cache:/distributors*');
-        await invalidateCache('cache:/distributor/*');
+  await invalidateCache('/distributors*');
+  await invalidateCache('/distributor/*');
 
-        res.status(201).json(newDistributor);
-    } catch (error: any) {
-        res.status(400).json({ message: error.message || 'Failed to create distributor' });
-    }
+  sendCreated(res, newDistributor);
 };
 
+/** PUT /distributor/:id — Update a distributor. */
 export const updateDistributor = async (
-    req: Request<DistributorParams, unknown, DistributorUpdate, unknown>,
-    res: Response
+  req: Request<DistributorParams, unknown, DistributorUpdate, unknown>,
+  res: Response,
 ) => {
-    const { id } = req.params;
-    const updates = req.body.data;
-    
-    try {
-        const updatedDistributor = await distributorService.updateDistributor(id, updates);
+  const { id } = req.params;
+  const updates = req.body.data;
+  const updatedDistributor = await distributorService.updateDistributor(id, updates);
 
-        await invalidateCache('cache:/distributors*');
-        await invalidateCache(`cache:/distributor/${id}`);
+  await invalidateCache('/distributors*');
+  await invalidateCache(`/distributor/${id}`);
 
-        res.status(200).json(updatedDistributor);
-    } catch (error: any) {
-        if (error.message.includes('not found')) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(400).json({ message: error.message || 'Failed to update distributor' });
-        }
-    }
+  sendSuccess(res, updatedDistributor);
 };
 
+/** DELETE /distributor/:id — Delete a distributor. */
 export const deleteDistributor = async (
-    req: Request<DistributorParams, unknown, unknown, unknown>,
-    res: Response
+  req: Request<DistributorParams, unknown, unknown, unknown>,
+  res: Response,
 ) => {
-    const { id } = req.params;
-    
-    try {
-        const deletedDistributor = await distributorService.deleteDistributor(id);
+  const { id } = req.params;
+  await distributorService.deleteDistributor(id);
 
-        await invalidateCache('cache:/distributors*');
-        await invalidateCache(`cache:/distributor/${id}`);
-        
-        res.status(200).json({ message: 'Distributor deleted successfully', distributor: deletedDistributor });
-    } catch (error: any) {
-        if (error.message.includes('not found')) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(400).json({ message: error.message || 'Failed to delete distributor' });
-        }
-    }
+  await invalidateCache('/distributors*');
+  await invalidateCache(`/distributor/${id}`);
+
+  sendDeleted(res, 'Distributor deleted successfully');
 };
 
+/** GET /distributors — List distributors with pagination and filters. */
 export const getDistributors = async (
-    req: Request<unknown, unknown, unknown, DistributorQuery>,
-    res: Response
+  req: Request<unknown, unknown, unknown, DistributorQuery>,
+  res: Response,
 ) => {
-    try {
-        const { offset, limit, name } = req.query;
-        const filters = { name };
-        const distributors = await distributorService.getDistributors(Number(offset), Number(limit), filters);
-        res.status(200).json(distributors);
-    } catch (error: any) {
-        res.status(500).json({ message: error.message || 'Failed to fetch distributors' });
-    }
+  const { offset, limit, name } = req.query;
+  const filters = { name };
+  const result = await distributorService.getDistributors(Number(offset), Number(limit), filters);
+
+  sendPaginated(res, result.data, result.pagination);
 };
 
+/** GET /distributor/:id — Get a single distributor by ID. */
 export const getDistributorById = async (
-    req: Request<DistributorParams, unknown, unknown, unknown>,
-    res: Response
+  req: Request<DistributorParams, unknown, unknown, unknown>,
+  res: Response,
 ) => {
-    const { id } = req.params;
-    
-    try {
-        const distributor = await distributorService.getDistributorById(id);
-        res.status(200).json(distributor);
-    } catch (error: any) {
-        if (error.message.includes('not found')) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: error.message || 'Failed to fetch distributor' });
-        }
-    }
+  const { id } = req.params;
+  const distributor = await distributorService.getDistributorById(id);
+
+  sendSuccess(res, distributor);
 };

@@ -1,12 +1,13 @@
 import prisma from '../../prisma.js';
+import { NotFoundError, ConflictError } from '../../utils/errors.js';
 
 export const createDistributor = async (name: string) => {
     const existingDistributor = await prisma.distributor.findUnique({
         where: { name },
     });
-    
+
     if (existingDistributor) {
-        throw new Error('Distributor name already exists');
+        throw new ConflictError('Distributor name already exists');
     }
 
     return await prisma.distributor.create({
@@ -23,7 +24,7 @@ export const updateDistributor = async (
     });
 
     if (!existingDistributor) {
-        throw new Error(`Distributor with id ${id} not found`);
+        throw new NotFoundError('Distributor');
     }
 
     if (updates.name) {
@@ -35,7 +36,7 @@ export const updateDistributor = async (
         });
 
         if (nameExists) {
-            throw new Error(`Distributor name "${updates.name}" is already in use`);
+            throw new ConflictError(`Distributor name "${updates.name}" is already in use`);
         }
     }
 
@@ -47,7 +48,7 @@ export const updateDistributor = async (
 
 export const deleteDistributor = async (id: string) => {
     const distributor = await prisma.distributor.findUnique({ where: { id } });
-    if (!distributor) throw new Error('Distributor not found');
+    if (!distributor) throw new NotFoundError('Distributor');
 
     return prisma.distributor.delete({ where: { id } });
 };
@@ -96,8 +97,8 @@ export const getDistributorById = async (id: string) => {
     });
 
     if (!distributor) {
-        throw new Error(`Distributor with id ${id} not found`);
+        throw new NotFoundError('Distributor');
     }
-    
+
     return distributor;
 };

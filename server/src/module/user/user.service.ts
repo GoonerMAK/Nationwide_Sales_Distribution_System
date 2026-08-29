@@ -1,5 +1,6 @@
 import prisma from '../../prisma.js';
 import bcrypt from 'bcrypt';
+import { NotFoundError, ConflictError } from '../../utils/errors.js';
 
 const SALT_ROUNDS = 10;
 
@@ -12,7 +13,7 @@ export const createUser = async (
         where: { email },
     });
     
-    if (existingEmail) { throw new Error('Email already exists'); }
+    if (existingEmail) { throw new ConflictError('Email already exists'); }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -37,7 +38,7 @@ export const updateUser = async (
     });
 
     if (!existingUser) {
-        throw new Error(`User with id ${id} not found`);
+        throw new NotFoundError('User');
     }
 
     // Checking if the new email is already in use by another user
@@ -50,7 +51,7 @@ export const updateUser = async (
         });
 
         if (emailExists) {
-            throw new Error(`Email "${updates.email}" is already in use`);
+            throw new ConflictError(`Email "${updates.email}" is already in use`);
         }
     }
 
@@ -67,7 +68,7 @@ export const updateUser = async (
 
 export const deleteUser = async (id: string) => {
     const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundError('User');
 
     return prisma.user.delete({ where: { id } });
 };
@@ -107,9 +108,9 @@ export const getUserById = async (id: string) => {
     });
 
     if (!user) {
-        throw new Error(`User with id ${id} not found`);
+        throw new NotFoundError('User');
     }
-    
+
     return user;
 };
 

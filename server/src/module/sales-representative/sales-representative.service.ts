@@ -1,4 +1,5 @@
 import prisma from '../../prisma.js';
+import { NotFoundError, ConflictError } from '../../utils/errors.js';
 
 export const createSalesRepresentative = async (
     user_id: string,
@@ -12,13 +13,13 @@ export const createSalesRepresentative = async (
     const userExists = await prisma.user.findUnique({
         where: { id: user_id },
     });
-    if (!userExists) throw new Error('User not found');
+    if (!userExists) throw new NotFoundError('User');
 
     const existingSalesRep = await prisma.salesRepresentative.findUnique({
         where: { user_id },
     });
     if (existingSalesRep) {
-        throw new Error('Sales representative already exists for this user');
+        throw new ConflictError('Sales representative already exists for this user');
     }
 
     if (username) {
@@ -26,7 +27,7 @@ export const createSalesRepresentative = async (
             where: { username },
         });
         if (usernameExists) {
-            throw new Error('Username already exists');
+            throw new ConflictError('Username already exists');
         }
     }
 
@@ -34,21 +35,21 @@ export const createSalesRepresentative = async (
         const regionExists = await prisma.region.findUnique({
             where: { id: region_id },
         });
-        if (!regionExists) throw new Error('Region not found');
+        if (!regionExists) throw new NotFoundError('Region');
     }
 
     if (area_id) {
         const areaExists = await prisma.area.findUnique({
             where: { id: area_id },
         });
-        if (!areaExists) throw new Error('Area not found');
+        if (!areaExists) throw new NotFoundError('Area');
     }
 
     if (territory_id) {
         const territoryExists = await prisma.territory.findUnique({
             where: { id: territory_id },
         });
-        if (!territoryExists) throw new Error('Territory not found');
+        if (!territoryExists) throw new NotFoundError('Territory');
     }
 
     return await prisma.salesRepresentative.create({
@@ -80,7 +81,7 @@ export const updateSalesRepresentative = async (
     });
 
     if (!existingSalesRep) {
-        throw new Error(`Sales representative with id ${id} not found`);
+        throw new NotFoundError('Sales representative');
     }
 
     if (updates.username) {
@@ -91,7 +92,7 @@ export const updateSalesRepresentative = async (
             },
         });
         if (usernameExists) {
-            throw new Error(`Username "${updates.username}" is already in use`);
+            throw new ConflictError(`Username "${updates.username}" is already in use`);
         }
     }
 
@@ -99,21 +100,21 @@ export const updateSalesRepresentative = async (
         const regionExists = await prisma.region.findUnique({
             where: { id: updates.region_id },
         });
-        if (!regionExists) throw new Error('Region not found');
+        if (!regionExists) throw new NotFoundError('Region');
     }
 
     if (updates.area_id) {
         const areaExists = await prisma.area.findUnique({
             where: { id: updates.area_id },
         });
-        if (!areaExists) throw new Error('Area not found');
+        if (!areaExists) throw new NotFoundError('Area');
     }
 
     if (updates.territory_id) {
         const territoryExists = await prisma.territory.findUnique({
             where: { id: updates.territory_id },
         });
-        if (!territoryExists) throw new Error('Territory not found');
+        if (!territoryExists) throw new NotFoundError('Territory');
     }
 
     return await prisma.salesRepresentative.update({
@@ -124,7 +125,7 @@ export const updateSalesRepresentative = async (
 
 export const deleteSalesRepresentative = async (id: string) => {
     const salesRep = await prisma.salesRepresentative.findUnique({ where: { id } });
-    if (!salesRep) throw new Error('Sales representative not found');
+    if (!salesRep) throw new NotFoundError('Sales representative');
 
     return prisma.salesRepresentative.delete({ where: { id } });
 };
@@ -201,8 +202,8 @@ export const getSalesRepresentativeById = async (id: string) => {
     });
 
     if (!salesRep) {
-        throw new Error(`Sales representative with id ${id} not found`);
+        throw new NotFoundError('Sales representative');
     }
-    
+
     return salesRep;
 };

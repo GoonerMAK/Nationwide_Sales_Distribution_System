@@ -1,4 +1,5 @@
 import prisma from '../../prisma.js';
+import { NotFoundError } from '../../utils/errors.js';
 
 export const createRetailer = async (
     name: string,
@@ -14,28 +15,28 @@ export const createRetailer = async (
     const regionExists = await prisma.region.findUnique({
         where: { id: region_id },
     });
-    if (!regionExists) throw new Error('Region not found');
+    if (!regionExists) throw new NotFoundError('Region');
 
     const areaExists = await prisma.area.findUnique({
         where: { id: area_id },
     });
-    if (!areaExists) throw new Error('Area not found');
+    if (!areaExists) throw new NotFoundError('Area');
 
     const distributorExists = await prisma.distributor.findUnique({
         where: { id: distributor_id },
     });
-    if (!distributorExists) throw new Error('Distributor not found');
+    if (!distributorExists) throw new NotFoundError('Distributor');
 
     const territoryExists = await prisma.territory.findUnique({
         where: { id: territory_id },
     });
-    if (!territoryExists) throw new Error('Territory not found');
+    if (!territoryExists) throw new NotFoundError('Territory');
 
     if (sales_representative_id) {
         const salesRepExists = await prisma.salesRepresentative.findUnique({
             where: { id: sales_representative_id },
         });
-        if (!salesRepExists) throw new Error('Sales representative not found');
+        if (!salesRepExists) throw new NotFoundError('Sales representative');
     }
 
     return await prisma.retailer.create({
@@ -72,42 +73,42 @@ export const updateRetailer = async (
     });
 
     if (!existingRetailer) {
-        throw new Error(`Retailer with id ${id} not found`);
+        throw new NotFoundError('Retailer');
     }
 
     if (updates.region_id) {
         const regionExists = await prisma.region.findUnique({
             where: { id: updates.region_id },
         });
-        if (!regionExists) throw new Error('Region not found');
+        if (!regionExists) throw new NotFoundError('Region');
     }
 
     if (updates.area_id) {
         const areaExists = await prisma.area.findUnique({
             where: { id: updates.area_id },
         });
-        if (!areaExists) throw new Error('Area not found');
+        if (!areaExists) throw new NotFoundError('Area');
     }
 
     if (updates.distributor_id) {
         const distributorExists = await prisma.distributor.findUnique({
             where: { id: updates.distributor_id },
         });
-        if (!distributorExists) throw new Error('Distributor not found');
+        if (!distributorExists) throw new NotFoundError('Distributor');
     }
 
     if (updates.territory_id) {
         const territoryExists = await prisma.territory.findUnique({
             where: { id: updates.territory_id },
         });
-        if (!territoryExists) throw new Error('Territory not found');
+        if (!territoryExists) throw new NotFoundError('Territory');
     }
 
     if (updates.sales_representative_id) {
         const salesRepExists = await prisma.salesRepresentative.findUnique({
             where: { id: updates.sales_representative_id },
         });
-        if (!salesRepExists) throw new Error('Sales representative not found');
+        if (!salesRepExists) throw new NotFoundError('Sales representative');
     }
 
     return await prisma.retailer.update({
@@ -118,7 +119,7 @@ export const updateRetailer = async (
 
 export const deleteRetailer = async (id: string) => {
     const retailer = await prisma.retailer.findUnique({ where: { id } });
-    if (!retailer) throw new Error('Retailer not found');
+    if (!retailer) throw new NotFoundError('Retailer');
 
     return prisma.retailer.delete({ where: { id } });
 };
@@ -207,8 +208,8 @@ export const getRetailerById = async (id: string) => {
     });
 
     if (!retailer) {
-        throw new Error(`Retailer with id ${id} not found`);
+        throw new NotFoundError('Retailer');
     }
-    
+
     return retailer;
 };
