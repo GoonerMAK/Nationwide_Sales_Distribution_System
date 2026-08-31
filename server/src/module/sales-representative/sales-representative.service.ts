@@ -1,5 +1,6 @@
 import prisma from '../../prisma.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 
 export const createSalesRepresentative = async (
     user_id: string,
@@ -142,7 +143,7 @@ export const getSalesRepresentatives = async (
         territory_id?: string;
     }
 ) => {
-    const where: any = {};
+    const where: Prisma.SalesRepresentativeWhereInput = {};
     
     if (filters?.username) {
         where.username = { contains: filters.username, mode: 'insensitive' };

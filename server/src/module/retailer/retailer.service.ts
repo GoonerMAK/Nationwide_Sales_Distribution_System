@@ -1,5 +1,6 @@
 import prisma from '../../prisma.js';
 import { NotFoundError } from '../../utils/errors.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 
 export const createRetailer = async (
     name: string,
@@ -138,7 +139,7 @@ export const getRetailers = async (
         assigned?: boolean;
     }
 ) => {
-    const where: any = {};
+    const where: Prisma.RetailerWhereInput = {};
     
     if (filters?.name) {
         where.name = { contains: filters.name, mode: 'insensitive' };

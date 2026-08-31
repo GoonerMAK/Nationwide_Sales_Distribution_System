@@ -1,5 +1,6 @@
 import prisma from '../../prisma.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 
 export const createDistributor = async (name: string) => {
     const existingDistributor = await prisma.distributor.findUnique({
@@ -58,7 +59,7 @@ export const getDistributors = async (
     limit: number,
     filters?: { name?: string }
 ) => {
-    const where: any = {};
+    const where: Prisma.DistributorWhereInput = {};
     
     if (filters?.name) {
         where.name = { contains: filters.name, mode: 'insensitive' };
