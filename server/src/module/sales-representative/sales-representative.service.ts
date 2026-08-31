@@ -11,47 +11,25 @@ export const createSalesRepresentative = async (
     area_id?: string,
     territory_id?: string
 ) => {
-    const userExists = await prisma.user.findUnique({
-        where: { id: user_id },
-    });
-    if (!userExists) throw new NotFoundError('User');
+    const [userExists, existingSalesRep, usernameExists, regionExists, areaExists, territoryExists] = await Promise.all([
+        prisma.user.findUnique({ where: { id: user_id } }),
+        prisma.salesRepresentative.findUnique({ where: { user_id } }),
+        username ? prisma.salesRepresentative.findUnique({ where: { username } }) : null,
+        region_id ? prisma.region.findUnique({ where: { id: region_id } }) : null,
+        area_id ? prisma.area.findUnique({ where: { id: area_id } }) : null,
+        territory_id ? prisma.territory.findUnique({ where: { id: territory_id } }) : null,
+    ]);
 
-    const existingSalesRep = await prisma.salesRepresentative.findUnique({
-        where: { user_id },
-    });
+    if (!userExists) throw new NotFoundError('User');
     if (existingSalesRep) {
         throw new ConflictError('Sales representative already exists for this user');
     }
-
-    if (username) {
-        const usernameExists = await prisma.salesRepresentative.findUnique({
-            where: { username },
-        });
-        if (usernameExists) {
-            throw new ConflictError('Username already exists');
-        }
+    if (username && usernameExists) {
+        throw new ConflictError('Username already exists');
     }
-
-    if (region_id) {
-        const regionExists = await prisma.region.findUnique({
-            where: { id: region_id },
-        });
-        if (!regionExists) throw new NotFoundError('Region');
-    }
-
-    if (area_id) {
-        const areaExists = await prisma.area.findUnique({
-            where: { id: area_id },
-        });
-        if (!areaExists) throw new NotFoundError('Area');
-    }
-
-    if (territory_id) {
-        const territoryExists = await prisma.territory.findUnique({
-            where: { id: territory_id },
-        });
-        if (!territoryExists) throw new NotFoundError('Territory');
-    }
+    if (region_id && !regionExists) throw new NotFoundError('Region');
+    if (area_id && !areaExists) throw new NotFoundError('Area');
+    if (territory_id && !territoryExists) throw new NotFoundError('Territory');
 
     return await prisma.salesRepresentative.create({
         data: {
@@ -85,38 +63,21 @@ export const updateSalesRepresentative = async (
         throw new NotFoundError('Sales representative');
     }
 
-    if (updates.username) {
-        const usernameExists = await prisma.salesRepresentative.findFirst({
-            where: {
-                username: updates.username,
-                NOT: { id },
-            },
-        });
-        if (usernameExists) {
-            throw new ConflictError(`Username "${updates.username}" is already in use`);
-        }
-    }
+    const [usernameExists, regionExists, areaExists, territoryExists] = await Promise.all([
+        updates.username
+            ? prisma.salesRepresentative.findFirst({ where: { username: updates.username, NOT: { id } } })
+            : null,
+        updates.region_id ? prisma.region.findUnique({ where: { id: updates.region_id } }) : null,
+        updates.area_id ? prisma.area.findUnique({ where: { id: updates.area_id } }) : null,
+        updates.territory_id ? prisma.territory.findUnique({ where: { id: updates.territory_id } }) : null,
+    ]);
 
-    if (updates.region_id) {
-        const regionExists = await prisma.region.findUnique({
-            where: { id: updates.region_id },
-        });
-        if (!regionExists) throw new NotFoundError('Region');
+    if (updates.username && usernameExists) {
+        throw new ConflictError(`Username "${updates.username}" is already in use`);
     }
-
-    if (updates.area_id) {
-        const areaExists = await prisma.area.findUnique({
-            where: { id: updates.area_id },
-        });
-        if (!areaExists) throw new NotFoundError('Area');
-    }
-
-    if (updates.territory_id) {
-        const territoryExists = await prisma.territory.findUnique({
-            where: { id: updates.territory_id },
-        });
-        if (!territoryExists) throw new NotFoundError('Territory');
-    }
+    if (updates.region_id && !regionExists) throw new NotFoundError('Region');
+    if (updates.area_id && !areaExists) throw new NotFoundError('Area');
+    if (updates.territory_id && !territoryExists) throw new NotFoundError('Territory');
 
     return await prisma.salesRepresentative.update({
         where: { id },
