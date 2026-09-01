@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { withPagination } from '../pagination/pagination.validator.js';
 
 export const retailerParamsSchema = z.object({
     id: z.uuid({ message: "Invalid ID format. Must be a UUID." })
@@ -30,7 +31,7 @@ export const updateRetailerSchema = z.object({
     }),
 });
 
-export const retailerQuerySchema = z.object({
+const retailerFilterSchema = z.object({
     name: z.string().optional(),
     phone: z.string().optional(),
     region_id: z.uuid({ message: "Invalid region ID format" }).optional(),
@@ -38,20 +39,10 @@ export const retailerQuerySchema = z.object({
     distributor_id: z.uuid({ message: "Invalid distributor ID format" }).optional(),
     territory_id: z.uuid({ message: "Invalid territory ID format" }).optional(),
     sales_representative_id: z.uuid({ message: "Invalid sales representative ID format" }).optional(),
-    assigned: z.enum(['true', 'false']).transform(val => val === 'true').optional(), 
-    offset: z.string()
-        .default('0')
-        .transform(val => parseInt(val, 10))
-        .refine(val => !isNaN(val) && val >= 0, { message: "Offset must be a non-negative number" })
-        .optional(),
-    limit: z.string()
-        .default('10')
-        .transform(val => parseInt(val, 10))
-        .refine(val => !isNaN(val) && val > 0 && val <= 100, { 
-            message: "Limit must be between 1 and 100" 
-        })
-        .optional(),
+    assigned: z.enum(['true', 'false']).transform(val => val === 'true').optional(),
 });
+
+export const retailerQuerySchema = withPagination(retailerFilterSchema);
 
 export type RetailerParams = z.infer<typeof retailerParamsSchema>;
 export type RetailerCreate = z.infer<typeof createRetailerSchema>;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { withPagination } from '../pagination/pagination.validator.js';
 
 export const distributorParamsSchema = z.object({
     id: z.uuid({ message: "Invalid ID format. Must be a UUID." })
@@ -14,21 +15,11 @@ export const updateDistributorSchema = z.object({
     }),
 });
 
-export const distributorQuerySchema = z.object({
+const distributorFilterSchema = z.object({
     name: z.string().optional(),
-    offset: z.string()
-        .default('0')
-        .transform(val => parseInt(val, 10))
-        .refine(val => !isNaN(val) && val >= 0, { message: "Offset must be a non-negative number" })
-        .optional(),
-    limit: z.string()
-        .default('10')
-        .transform(val => parseInt(val, 10))
-        .refine(val => !isNaN(val) && val > 0 && val <= 100, { 
-            message: "Limit must be between 1 and 100" 
-        })
-        .optional(),
 });
+
+export const distributorQuerySchema = withPagination(distributorFilterSchema);
 
 export type DistributorParams = z.infer<typeof distributorParamsSchema>;
 export type DistributorCreate = z.infer<typeof createDistributorSchema>;
