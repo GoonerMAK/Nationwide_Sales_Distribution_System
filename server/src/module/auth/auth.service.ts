@@ -18,6 +18,7 @@ export const signUp = async (email: string, password: string) => {
 
   const user = await prisma.user.create({
     data: { email, password: hashedPassword },
+    omit: { password: true },
   });
 
   return { user };
@@ -38,12 +39,13 @@ export const logIn = async (email: string, password: string) => {
 
   const token = jwt.sign({ id: user.id }, env.JWT_SECRET, { expiresIn: '3d' });
 
-  return { user, token };
+  const { password: _password, ...safeUser } = user;
+  return { user: safeUser, token };
 };
 
 /** Fetches the currently authenticated user by ID. */
 export const getAuthenticatedUser = async (userId: string) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, omit: { password: true } });
 
   if (!user) {
     throw new NotFoundError('User');

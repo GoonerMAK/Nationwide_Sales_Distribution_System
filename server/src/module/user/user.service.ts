@@ -22,6 +22,7 @@ export const createUser = async (
             password: hashedPassword,
             email,
         },
+        omit: { password: true },
     });
 };
 
@@ -62,6 +63,7 @@ export const updateUser = async (
     return await prisma.user.update({
         where: { id },
         data: updates,
+        omit: { password: true },
     });
 };
 
@@ -70,7 +72,7 @@ export const deleteUser = async (id: string) => {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundError('User');
 
-    return prisma.user.delete({ where: { id } });
+    return prisma.user.delete({ where: { id }, omit: { password: true } });
 };
 
 
@@ -105,6 +107,7 @@ export const getAllUsers = async (offset: number, limit: number) => {
 export const getUserById = async (id: string) => {
     const user = await prisma.user.findUnique({
         where: { id },
+        omit: { password: true },
     });
 
     if (!user) {
