@@ -72,18 +72,19 @@ export function rateLimiter(windowMs = 60000, maxRequests = 100) {
     const now = Date.now();
     const entry = store.get(ip);
 
+    let current: RateLimitEntry;
     if (!entry || now > entry.resetAt) {
-      store.set(ip, { count: 1, resetAt: now + windowMs });
-      next();
-      return;
+      current = { count: 1, resetAt: now + windowMs };
+      store.set(ip, current);
+    } else {
+      entry.count += 1;
+      current = entry;
     }
 
-    entry.count += 1;
-
     res.setHeader('X-RateLimit-Limit', String(maxRequests));
-    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, maxRequests - entry.count)));
+    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, maxRequests - current.count)));
 
-    if (entry.count > maxRequests) {
+    if (current.count > maxRequests) {
       res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json({
         success: false,
         message: 'Too many requests. Please try again later.',
