@@ -124,4 +124,8 @@ model SalesRepresentative {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  @@index([region_id])
+  @@index([area_id])
+  @@index([territory_id])
 }
