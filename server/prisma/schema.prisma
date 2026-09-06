@@ -45,6 +45,7 @@ model Area {
   updated_at DateTime @updatedAt
 
   @@unique([name, region_id])
+  @@index([region_id])
 }
 
 model Territory {
@@ -61,6 +62,7 @@ model Territory {
   updated_at DateTime @updatedAt
 
   @@unique([name, area_id])
+  @@index([area_id])
 }
 
 model Distributor {
