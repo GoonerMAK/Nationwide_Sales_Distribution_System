@@ -10,7 +10,6 @@ export const createUserSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-    id: z.uuid({ message: "Invalid user ID" }).optional(),
     data: z.object({
         password: z.string().optional(),
         email: z.email({ message: "Invalid email address" }).optional(),
