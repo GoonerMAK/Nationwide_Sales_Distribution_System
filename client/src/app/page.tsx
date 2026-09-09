@@ -1,22 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useCurrentUser, useLogout } from "@/lib/auth";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useLogout } from "@/lib/auth";
 
 export default function Home() {
   const router = useRouter();
-  const { data: user, isLoading, isError } = useCurrentUser();
+  const { user, isPending } = useRequireAuth();
   const logout = useLogout();
 
-  useEffect(() => {
-    if (!isLoading && isError) {
-      router.replace("/login");
-    }
-  }, [isLoading, isError, router]);
-
-  if (isLoading || isError) {
+  if (isPending) {
     return (
       <main className="flex flex-1 items-center justify-center">
         <p className="text-sm text-muted-foreground">Loading…</p>
