@@ -24,12 +24,13 @@ export default function Home() {
       <p className="text-sm text-muted-foreground">Signed in as {user?.email}</p>
       <Button
         variant="outline"
+        disabled={logout.isPending}
         onClick={async () => {
           await logout.mutateAsync();
           router.push("/login");
         }}
       >
-        Log out
+        {logout.isPending ? "Logging out…" : "Log out"}
       </Button>
     </main>
   );
