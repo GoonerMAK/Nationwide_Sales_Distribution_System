@@ -10,7 +10,10 @@
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix server && npm run build --prefix client",
     "lint": "npm run lint --prefix server && npm run lint --prefix client",
-    "typecheck": "npm run typecheck --prefix server",
+    "lint:fix": "npm run lint:fix --prefix server && npm run lint:fix --prefix client",
+    "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
+    "format": "npm run format --prefix server && npm run format --prefix client",
+    "format:check": "npm run format:check --prefix server && npm run format:check --prefix client",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:setup": "npm run prisma:deploy --prefix server && npm run seed --prefix server"
