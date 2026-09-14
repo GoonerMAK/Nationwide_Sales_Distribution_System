@@ -16,9 +16,12 @@
     "format:check": "npm run format:check --prefix server && npm run format:check --prefix client",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:setup": "npm run prisma:deploy --prefix server && npm run seed --prefix server"
+    "db:setup": "npm run prisma:deploy --prefix server && npm run seed --prefix server",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1"
   }
 }
