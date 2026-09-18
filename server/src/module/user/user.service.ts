@@ -39,7 +39,7 @@ export const updateUser = async (
     throw new NotFoundError('User');
   }
 
-  // Checking if the new email is already in use by another user.
+  // Checking if the new email is already in use by another user
   if (updates.email) {
     const emailExists = await prisma.user.findFirst({
       where: {
