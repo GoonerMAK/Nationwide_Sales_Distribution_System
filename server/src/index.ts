@@ -5,6 +5,7 @@ import { connectRedis, disconnectRedis } from './redis.js';
 import prisma from './prisma.js';
 import { logger } from './utils/logger.js';
 import { requestIdMiddleware } from './middleware/request-id.middleware.js';
+import { requestLoggerMiddleware } from './middleware/request-logger.middleware.js';
 import { securityHeaders, corsMiddleware, rateLimiter } from './middleware/security.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { HTTP_STATUS } from './constants/http-status.js';
@@ -22,6 +23,7 @@ export const app = express();
 
 // Global middleware (order matters)
 app.use(requestIdMiddleware);
+app.use(requestLoggerMiddleware);
 app.use(securityHeaders);
 app.use(corsMiddleware);
 app.use(rateLimiter());
