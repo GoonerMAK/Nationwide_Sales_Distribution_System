@@ -17,6 +17,9 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:setup": "npm run prisma:deploy --prefix server && npm run seed --prefix server",
+    "db:reset": "npm run prisma:reset --prefix server",
+    "db:studio": "npm run prisma:studio --prefix server",
+    "check": "npm run lint && npm run typecheck && npm run format:check",
     "prepare": "husky"
   },
   "devDependencies": {

@@ -40,7 +40,9 @@ npm run dev
 | `npm run typecheck` | Type-checks the server |
 | `npm run db:up` / `npm run db:down` | Starts / stops Postgres + Redis |
 | `npm run db:setup` | `prisma migrate deploy` + seed |
-| `npm run prisma:studio --prefix server` | Opens Prisma Studio |
+| `npm run db:reset` | `prisma migrate reset` (drops, re-migrates, re-seeds) |
+| `npm run db:studio` | Opens Prisma Studio |
+| `npm run check` | Lint + typecheck + format:check for server and client |
 
 The server also exposes a health check at `GET /health` (also available as `GET /api/health`).
 
