@@ -22,22 +22,18 @@ export const createTerritory = async (name: string, area_id: string) => {
 };
 
 /** Updates a territory by ID. Validates area exists and name uniqueness within area. */
-export const updateTerritory = async (
-  id: string,
-  updates: { name?: string; area_id?: string },
-) => {
-  const existing = await prisma.territory.findUnique({ where: { id } });
+export const updateTerritory = async (id: string, updates: { name?: string; area_id?: string }) => {
+  const [existing, areaExists] = await Promise.all([
+    prisma.territory.findUnique({ where: { id } }),
+    updates.area_id ? prisma.area.findUnique({ where: { id: updates.area_id } }) : null,
+  ]);
 
   if (!existing) {
     throw new NotFoundError('Territory');
   }
 
-  if (updates.area_id) {
-    const areaExists = await prisma.area.findUnique({ where: { id: updates.area_id } });
-
-    if (!areaExists) {
-      throw new NotFoundError('Area');
-    }
+  if (updates.area_id && !areaExists) {
+    throw new NotFoundError('Area');
   }
 
   const updatedName = updates.name ?? existing.name;

@@ -22,22 +22,18 @@ export const createArea = async (name: string, region_id: string) => {
 };
 
 /** Updates an area by ID. Validates region exists and name uniqueness within region. */
-export const updateArea = async (
-  id: string,
-  updates: { name?: string; region_id?: string },
-) => {
-  const existing = await prisma.area.findUnique({ where: { id } });
+export const updateArea = async (id: string, updates: { name?: string; region_id?: string }) => {
+  const [existing, regionExists] = await Promise.all([
+    prisma.area.findUnique({ where: { id } }),
+    updates.region_id ? prisma.region.findUnique({ where: { id: updates.region_id } }) : null,
+  ]);
 
   if (!existing) {
     throw new NotFoundError('Area');
   }
 
-  if (updates.region_id) {
-    const regionExists = await prisma.region.findUnique({ where: { id: updates.region_id } });
-
-    if (!regionExists) {
-      throw new NotFoundError('Region');
-    }
+  if (updates.region_id && !regionExists) {
+    throw new NotFoundError('Region');
   }
 
   const updatedName = updates.name ?? existing.name;

@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 
@@ -9,34 +9,58 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 const regions = [
-  'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Barisal', 
-  'Sylhet', 'Rangpur', 'Mymensingh'
+  'Dhaka',
+  'Chittagong',
+  'Rajshahi',
+  'Khulna',
+  'Barisal',
+  'Sylhet',
+  'Rangpur',
+  'Mymensingh',
 ];
 
 const areasByRegion = {
-  'Dhaka': ['Mirpur', 'Dhanmondi', 'Gulshan', 'Uttara', 'Mohammadpur', 'Banani', 'Badda'],
-  'Chittagong': ['Agrabad', 'Nasirabad', 'Panchlaish', 'Khulshi', 'Halishahar'],
-  'Rajshahi': ['Boalia', 'Matihar', 'Rajpara', 'Shaheb Bazar'],
-  'Khulna': ['Sonadanga', 'Khalishpur', 'Daulatpur', 'Khan Jahan Ali'],
-  'Barisal': ['Sadar', 'Kotwali', 'Rupatoli', 'Kashipur'],
-  'Sylhet': ['Zindabazar', 'Ambarkhana', 'Bondor Bazar', 'Uposhohor'],
-  'Rangpur': ['Mahiganj', 'Satmatha', 'Munshipara', 'Dhap'],
-  'Mymensingh': ['Charpara', 'Kachari', 'Ganginarpar', 'Maskanda']
+  Dhaka: ['Mirpur', 'Dhanmondi', 'Gulshan', 'Uttara', 'Mohammadpur', 'Banani', 'Badda'],
+  Chittagong: ['Agrabad', 'Nasirabad', 'Panchlaish', 'Khulshi', 'Halishahar'],
+  Rajshahi: ['Boalia', 'Matihar', 'Rajpara', 'Shaheb Bazar'],
+  Khulna: ['Sonadanga', 'Khalishpur', 'Daulatpur', 'Khan Jahan Ali'],
+  Barisal: ['Sadar', 'Kotwali', 'Rupatoli', 'Kashipur'],
+  Sylhet: ['Zindabazar', 'Ambarkhana', 'Bondor Bazar', 'Uposhohor'],
+  Rangpur: ['Mahiganj', 'Satmatha', 'Munshipara', 'Dhap'],
+  Mymensingh: ['Charpara', 'Kachari', 'Ganginarpar', 'Maskanda'],
 };
 
 const territoryPrefixes = ['North', 'South', 'East', 'West', 'Central'];
 
 const distributorNames = [
-  'Bengal Distributors Ltd', 'Delta Trade Corp', 'Meghna Enterprises',
-  'Jamuna Distribution', 'Padma Wholesale', 'Surma Trading House',
-  'Karnaphuli Suppliers', 'Teesta Logistics', 'Buriganga Trade',
-  'Sangu Distribution', 'Rupsha Trading', 'Gorai Enterprises',
-  'Brahmaputra Wholesale', 'Atrai Suppliers', 'Bhairab Distribution'
+  'Bengal Distributors Ltd',
+  'Delta Trade Corp',
+  'Meghna Enterprises',
+  'Jamuna Distribution',
+  'Padma Wholesale',
+  'Surma Trading House',
+  'Karnaphuli Suppliers',
+  'Teesta Logistics',
+  'Buriganga Trade',
+  'Sangu Distribution',
+  'Rupsha Trading',
+  'Gorai Enterprises',
+  'Brahmaputra Wholesale',
+  'Atrai Suppliers',
+  'Bhairab Distribution',
 ];
 
 const retailerPrefixes = [
-  'Store', 'Shop', 'Mart', 'Outlet', 'Bazaar', 'Market', 
-  'Trading', 'Enterprise', 'Traders', 'Brothers'
+  'Store',
+  'Shop',
+  'Mart',
+  'Outlet',
+  'Bazaar',
+  'Market',
+  'Trading',
+  'Enterprise',
+  'Traders',
+  'Brothers',
 ];
 
 const routes = ['Route A', 'Route B', 'Route C', 'Route D', 'Route E'];
@@ -62,9 +86,48 @@ function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
+/** Picks 3–5 territory names for an area, e.g. "North Mirpur". Falls back to a numbered name if prefixes collide. */
+function buildTerritoryNames(areaName: string): string[] {
+  const names: string[] = [];
+  const usedPrefixes = new Set<string>();
+  const numTerritories = randomInt(3, 5);
+
+  for (let i = 0; i < numTerritories; i++) {
+    let prefix = random(territoryPrefixes);
+    let attempts = 0;
+
+    while (usedPrefixes.has(prefix) && attempts < 20) {
+      prefix = random(territoryPrefixes);
+      attempts++;
+    }
+
+    names.push(
+      usedPrefixes.has(prefix) ? `${prefix} ${areaName} ${i + 1}` : `${prefix} ${areaName}`,
+    );
+    usedPrefixes.add(prefix);
+  }
+
+  return names;
+}
+
+/** Groups items by a key once, so later lookups are O(1) instead of re-filtering the array per row. */
+function groupBy<T>(items: T[], getKey: (item: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const key = getKey(item);
+    const group = groups.get(key);
+    if (group) {
+      group.push(item);
+    } else {
+      groups.set(key, [item]);
+    }
+  }
+  return groups;
+}
+
 async function main() {
-  if (process.env.RUN_SEED !== "true") {
-    console.log("RUN_SEED is false. Skipping seed.");
+  if (process.env.RUN_SEED !== 'true') {
+    console.log('RUN_SEED is false. Skipping seed.');
     return;
   }
 
@@ -79,117 +142,73 @@ async function main() {
   await prisma.distributor.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log('🌍 Creating/fetching 8 regions...');
-  const createdRegions = [];
-  for (const name of regions) {
-    const region = await prisma.region.upsert({
-      where: { name },
-      update: {},
-      create: { name }
-    });
-    createdRegions.push(region);
-  }
-  console.log(`  ✓ Processed ${createdRegions.length} regions`);
+  // Tables are empty, so bulk insert: one query per step.
+  console.log('🌍 Creating 8 regions...');
+  const createdRegions = await prisma.region.createManyAndReturn({
+    data: regions.map((name) => ({ name })),
+  });
+  console.log(`  ✓ Created ${createdRegions.length} regions`);
 
-  console.log('📍 Creating/fetching areas...');
-  const createdAreas = [];
-  for (const region of createdRegions) {
-    const areaNames = areasByRegion[region.name as keyof typeof areasByRegion];
-    for (const areaName of areaNames) {
-      const area = await prisma.area.upsert({
-        where: { 
-          name_region_id: {
-            name: areaName,
-            region_id: region.id
-          }
-        },
-        update: {},
-        create: {
-          name: areaName,
-          region_id: region.id
-        }
-      });
-      createdAreas.push(area);
-    }
-  }
-  console.log(`  ✓ Processed ${createdAreas.length} areas`);
+  console.log('📍 Creating areas...');
+  const createdAreas = await prisma.area.createManyAndReturn({
+    data: createdRegions.flatMap((region) =>
+      areasByRegion[region.name as keyof typeof areasByRegion].map((areaName) => ({
+        name: areaName,
+        region_id: region.id,
+      })),
+    ),
+  });
+  console.log(`  ✓ Created ${createdAreas.length} areas`);
 
   console.log('🗺️  Creating territories...');
-  const createdTerritories = [];
-  for (const area of createdAreas) {
-    const numTerritories = randomInt(3, 5);
-    const usedPrefixes = new Set<string>();
-    
-    for (let i = 0; i < numTerritories; i++) {
-      let prefix = random(territoryPrefixes);
-      let attempts = 0;
-      
-      while (usedPrefixes.has(prefix) && attempts < 20) {
-        prefix = random(territoryPrefixes);
-        attempts++;
-      }
-      
-      const territoryName = usedPrefixes.has(prefix) 
-        ? `${prefix} ${area.name} ${i + 1}`
-        : `${prefix} ${area.name}`;
-      
-      usedPrefixes.add(prefix);
-      
-      const territory = await prisma.territory.create({
-        data: {
-          name: territoryName,
-          area_id: area.id
-        }
-      });
-      createdTerritories.push(territory);
-    }
-  }
+  const createdTerritories = await prisma.territory.createManyAndReturn({
+    data: createdAreas.flatMap((area) =>
+      buildTerritoryNames(area.name).map((name) => ({ name, area_id: area.id })),
+    ),
+  });
   console.log(`  ✓ Created ${createdTerritories.length} territories`);
 
   console.log('🏢 Creating 15 distributors...');
-  const createdDistributors = await prisma.$transaction(
-    distributorNames.map(name => prisma.distributor.create({ data: { name } }))
-  );
+  const createdDistributors = await prisma.distributor.createManyAndReturn({
+    data: distributorNames.map((name) => ({ name })),
+  });
   console.log(`  ✓ Created ${createdDistributors.length} distributors`);
 
   console.log('👥 Creating 2,000 sales representatives...');
-  const batchSize = 500;
   const totalSalesReps = 2000;
-  const createdSalesReps = [];
+  const repIndexes = Array.from({ length: totalSalesReps }, (_, idx) => idx);
 
-  for (let i = 0; i < totalSalesReps; i += batchSize) {
-    const currentBatch = Math.min(batchSize, totalSalesReps - i);
-    
-    for (let j = 0; j < currentBatch; j++) {
-      const idx = i + j;
-      const user = await prisma.user.create({
-        data: {
-          email: `salesrep${idx}@example.com`,
-          password: `$2b$10$hashedpassword${idx}`
-        }
-      });
+  const createdUsers = await prisma.user.createManyAndReturn({
+    data: repIndexes.map((idx) => ({
+      email: `salesrep${idx}@example.com`,
+      password: `$2b$10$hashedpassword${idx}`,
+    })),
+    select: { id: true, email: true },
+  });
+  // RETURNING order is not guaranteed, so link reps to users by email rather than array position.
+  const userIdByEmail = new Map(createdUsers.map((user) => [user.email, user.id]));
 
+  const areasByRegionId = groupBy(createdAreas, (area) => area.region_id);
+  const territoriesByAreaId = groupBy(createdTerritories, (territory) => territory.area_id);
+
+  const createdSalesReps = await prisma.salesRepresentative.createManyAndReturn({
+    data: repIndexes.map((idx) => {
       const region = random(createdRegions);
-      const regionAreas = createdAreas.filter(a => a.region_id === region.id);
-      const area = random(regionAreas);
-      const areaTerritories = createdTerritories.filter(t => t.area_id === area.id);
-      const territory = random(areaTerritories);
+      const area = random(areasByRegionId.get(region.id)!);
+      const territory = random(territoriesByAreaId.get(area.id)!);
 
-      const salesRep = await prisma.salesRepresentative.create({
-        data: {
-          user_id: user.id,
-          username: `salesrep${idx}`,
-          name: `Sales Rep ${idx}`,
-          phone: generatePhone(),
-          region_id: region.id,
-          area_id: area.id,
-          territory_id: territory.id
-        }
-      });
-      createdSalesReps.push(salesRep);
-    }
-    console.log(`  ✓ Created ${i + currentBatch}/${totalSalesReps} sales representatives`);
-  }
+      return {
+        user_id: userIdByEmail.get(`salesrep${idx}@example.com`)!,
+        username: `salesrep${idx}`,
+        name: `Sales Rep ${idx}`,
+        phone: generatePhone(),
+        region_id: region.id,
+        area_id: area.id,
+        territory_id: territory.id,
+      };
+    }),
+  });
+  console.log(`  ✓ Created ${createdSalesReps.length} sales representatives`);
 
   console.log('🏪 Creating 140,000 retailers in batches...');
   const totalRetailers = 140000;
@@ -203,39 +222,35 @@ async function main() {
   for (let i = 0; i < totalRetailers; i += retailerBatchSize) {
     const retailers = [];
     const currentBatch = Math.min(retailerBatchSize, totalRetailers - i);
-    
+
     for (let j = 0; j < currentBatch; j++) {
       let salesRep = shuffledSalesReps[salesRepIndex];
       if (retailersPerRep >= 70) {
         salesRepIndex++;
         if (salesRepIndex >= shuffledSalesReps.length) {
-          salesRepIndex = 0; 
+          salesRepIndex = 0;
         }
         salesRep = shuffledSalesReps[salesRepIndex];
         retailersPerRep = 0;
       }
       retailersPerRep++;
 
-      const territory = createdTerritories.find(t => t.id === salesRep.territory_id);
-      const area = createdAreas.find(a => a.id === territory?.area_id);
-      const region = createdRegions.find(r => r.id === area?.region_id);
-
       retailers.push({
         name: `${random(retailerPrefixes)} ${randomInt(1000, 9999)}`,
         phone: Math.random() > 0.2 ? generatePhone() : null,
-        region_id: region!.id,
-        area_id: area!.id,
-        territory_id: territory!.id,
+        region_id: salesRep.region_id!,
+        area_id: salesRep.area_id!,
+        territory_id: salesRep.territory_id!,
         distributor_id: random(createdDistributors).id,
         sales_representative_id: salesRep.id,
         points: randomInt(0, 1000),
-        routes: random(routes)
+        routes: random(routes),
       });
     }
 
     await prisma.retailer.createMany({
       data: retailers,
-      skipDuplicates: true
+      skipDuplicates: true,
     });
     retailerCount += currentBatch;
     console.log(`  ✓ Created ${retailerCount}/${totalRetailers} retailers`);
@@ -248,7 +263,7 @@ async function main() {
     prisma.territory.count(),
     prisma.distributor.count(),
     prisma.salesRepresentative.count(),
-    prisma.retailer.count()
+    prisma.retailer.count(),
   ]);
 
   console.log('\n✅ Seeding completed!');
@@ -265,14 +280,16 @@ async function main() {
   const repWithRetailerCount = await prisma.salesRepresentative.findMany({
     include: {
       _count: {
-        select: { retailers: true }
-      }
-    }
+        select: { retailers: true },
+      },
+    },
   });
-  
-  const maxRetailers = Math.max(...repWithRetailerCount.map(rep => rep._count.retailers));
-  const avgRetailers = repWithRetailerCount.reduce((sum, rep) => sum + rep._count.retailers, 0) / repWithRetailerCount.length;
-  
+
+  const maxRetailers = Math.max(...repWithRetailerCount.map((rep) => rep._count.retailers));
+  const avgRetailers =
+    repWithRetailerCount.reduce((sum, rep) => sum + rep._count.retailers, 0) /
+    repWithRetailerCount.length;
+
   console.log('\n📈 Retailer Distribution:');
   console.log(`  Max retailers per sales rep: ${maxRetailers}`);
   console.log(`  Avg retailers per sales rep: ${avgRetailers.toFixed(2)}`);
