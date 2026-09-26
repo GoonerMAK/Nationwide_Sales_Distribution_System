@@ -32,22 +32,26 @@ export function cacheMiddleware(resource: string, ttl = 300) {
 
       if (cachedData) {
         logger.debug('Cache HIT', { key: cacheKey });
-        res.status(HTTP_STATUS.OK).json(JSON.parse(cachedData));
+        res.status(HTTP_STATUS.OK).type('json').send(cachedData);
         return;
       }
 
       logger.debug('Cache MISS', { key: cacheKey });
 
-      const originalJson = res.json.bind(res);
+      const originalSend = res.send.bind(res);
 
       res.json = (body: unknown) => {
+        // Serialize once and reuse
+        const payload = JSON.stringify(body);
+
         // Only cache successful responses
         if (res.statusCode === HTTP_STATUS.OK) {
           redisClient
-            .setEx(cacheKey, ttl, JSON.stringify(body))
+            .setEx(cacheKey, ttl, payload)
             .catch((err) => logger.error('Redis cache set error', { error: String(err) }));
         }
-        return originalJson(body);
+        res.type('json');
+        return originalSend(payload);
       };
 
       next();
