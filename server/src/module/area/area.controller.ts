@@ -12,8 +12,7 @@ export const createArea = async (
   const { name, region_id } = req.body;
   const newArea = await areaService.createArea(name, region_id);
 
-  await invalidateCache('/areas*');
-  await invalidateCache('/area/*');
+  await invalidateCache('area');
 
   sendCreated(res, newArea);
 };
@@ -27,8 +26,7 @@ export const updateArea = async (
   const updates = req.body.data;
   const updatedArea = await areaService.updateArea(id, updates);
 
-  await invalidateCache('/areas*');
-  await invalidateCache(`/area/${id}`);
+  await invalidateCache('area');
 
   sendSuccess(res, updatedArea);
 };
@@ -41,8 +39,7 @@ export const deleteArea = async (
   const { id } = req.params;
   await areaService.deleteArea(id);
 
-  await invalidateCache('/areas*');
-  await invalidateCache(`/area/${id}`);
+  await invalidateCache('area', 'territory', 'sales-representative');
 
   sendDeleted(res, 'Area deleted successfully');
 };

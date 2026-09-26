@@ -1,6 +1,11 @@
 import type { Request, Response } from 'express';
 import * as distributorService from '../distributor/distributor.service.js';
-import type { DistributorParams, DistributorCreate, DistributorUpdate, DistributorQuery } from '../distributor/distributor.validator.js';
+import type {
+  DistributorParams,
+  DistributorCreate,
+  DistributorUpdate,
+  DistributorQuery,
+} from '../distributor/distributor.validator.js';
 import { invalidateCache } from '../../middleware/cache.middleware.js';
 import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
@@ -12,8 +17,7 @@ export const createDistributor = async (
   const { name } = req.body;
   const newDistributor = await distributorService.createDistributor(name);
 
-  await invalidateCache('/distributors*');
-  await invalidateCache('/distributor/*');
+  await invalidateCache('distributor');
 
   sendCreated(res, newDistributor);
 };
@@ -27,8 +31,7 @@ export const updateDistributor = async (
   const updates = req.body.data;
   const updatedDistributor = await distributorService.updateDistributor(id, updates);
 
-  await invalidateCache('/distributors*');
-  await invalidateCache(`/distributor/${id}`);
+  await invalidateCache('distributor');
 
   sendSuccess(res, updatedDistributor);
 };
@@ -41,8 +44,7 @@ export const deleteDistributor = async (
   const { id } = req.params;
   await distributorService.deleteDistributor(id);
 
-  await invalidateCache('/distributors*');
-  await invalidateCache(`/distributor/${id}`);
+  await invalidateCache('distributor');
 
   sendDeleted(res, 'Distributor deleted successfully');
 };

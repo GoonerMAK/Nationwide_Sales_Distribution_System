@@ -1,6 +1,11 @@
 import type { Request, Response } from 'express';
 import * as salesRepresentativeService from './sales-representative.service.js';
-import type { SalesRepresentativeParams, SalesRepresentativeCreate, SalesRepresentativeUpdate, SalesRepresentativeQuery } from './sales-representative.validator.js';
+import type {
+  SalesRepresentativeParams,
+  SalesRepresentativeCreate,
+  SalesRepresentativeUpdate,
+  SalesRepresentativeQuery,
+} from './sales-representative.validator.js';
 import { invalidateCache } from '../../middleware/cache.middleware.js';
 import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
@@ -9,15 +14,7 @@ export const createSalesRepresentative = async (
   req: Request<unknown, unknown, SalesRepresentativeCreate, unknown>,
   res: Response,
 ) => {
-  const {
-    user_id,
-    username,
-    name,
-    phone,
-    region_id,
-    area_id,
-    territory_id,
-  } = req.body;
+  const { user_id, username, name, phone, region_id, area_id, territory_id } = req.body;
 
   const newSalesRepresentative = await salesRepresentativeService.createSalesRepresentative(
     user_id,
@@ -29,8 +26,7 @@ export const createSalesRepresentative = async (
     territory_id,
   );
 
-  await invalidateCache('/sales-representatives*');
-  await invalidateCache('/sales-representative/*');
+  await invalidateCache('sales-representative');
 
   sendCreated(res, newSalesRepresentative);
 };
@@ -42,10 +38,12 @@ export const updateSalesRepresentative = async (
 ) => {
   const { id } = req.params;
   const updates = req.body.data;
-  const updatedSalesRepresentative = await salesRepresentativeService.updateSalesRepresentative(id, updates);
+  const updatedSalesRepresentative = await salesRepresentativeService.updateSalesRepresentative(
+    id,
+    updates,
+  );
 
-  await invalidateCache('/sales-representatives*');
-  await invalidateCache(`/sales-representative/${id}`);
+  await invalidateCache('sales-representative');
 
   sendSuccess(res, updatedSalesRepresentative);
 };
@@ -58,8 +56,7 @@ export const deleteSalesRepresentative = async (
   const { id } = req.params;
   await salesRepresentativeService.deleteSalesRepresentative(id);
 
-  await invalidateCache('/sales-representatives*');
-  await invalidateCache(`/sales-representative/${id}`);
+  await invalidateCache('sales-representative', 'retailer');
 
   sendDeleted(res, 'Sales representative deleted successfully');
 };
@@ -71,7 +68,11 @@ export const getSalesRepresentatives = async (
 ) => {
   const { offset, limit, username, name, phone, region_id, area_id, territory_id } = req.query;
   const filters = { username, name, phone, region_id, area_id, territory_id };
-  const result = await salesRepresentativeService.getSalesRepresentatives(Number(offset), Number(limit), filters);
+  const result = await salesRepresentativeService.getSalesRepresentatives(
+    Number(offset),
+    Number(limit),
+    filters,
+  );
 
   sendPaginated(res, result.data, result.pagination);
 };

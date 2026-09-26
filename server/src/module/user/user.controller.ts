@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import * as userService from '../user/user.service.js';
 import type { UserParams, UserCreate, UserUpdate } from '../user/user.validator.js';
 import type { PaginationQuery } from '../pagination/pagination.validator.js';
+import { invalidateCache } from '../../middleware/cache.middleware.js';
 import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
 /** POST /user — Create a new user. */
@@ -34,6 +35,8 @@ export const deleteUser = async (
 ) => {
   const { id } = req.params;
   await userService.deleteUser(id);
+
+  await invalidateCache('sales-representative', 'retailer');
 
   sendDeleted(res, 'User deleted successfully');
 };

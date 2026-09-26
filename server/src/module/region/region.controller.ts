@@ -12,8 +12,7 @@ export const createRegion = async (
   const { name } = req.body;
   const newRegion = await regionService.createRegion(name);
 
-  await invalidateCache('/regions*');
-  await invalidateCache('/region/*');
+  await invalidateCache('region');
 
   sendCreated(res, newRegion);
 };
@@ -27,8 +26,7 @@ export const updateRegion = async (
   const updates = req.body.data;
   const updatedRegion = await regionService.updateRegion(id, updates);
 
-  await invalidateCache('/regions*');
-  await invalidateCache(`/region/${id}`);
+  await invalidateCache('region');
 
   sendSuccess(res, updatedRegion);
 };
@@ -41,8 +39,7 @@ export const deleteRegion = async (
   const { id } = req.params;
   await regionService.deleteRegion(id);
 
-  await invalidateCache('/regions*');
-  await invalidateCache(`/region/${id}`);
+  await invalidateCache('region', 'area', 'territory', 'sales-representative');
 
   sendDeleted(res, 'Region deleted successfully');
 };

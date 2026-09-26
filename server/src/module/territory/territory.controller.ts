@@ -1,6 +1,11 @@
 import type { Request, Response } from 'express';
 import * as territoryService from '../territory/territory.service.js';
-import type { TerritoryParams, TerritoryCreate, TerritoryUpdate, TerritoryQuery } from '../territory/territory.validator.js';
+import type {
+  TerritoryParams,
+  TerritoryCreate,
+  TerritoryUpdate,
+  TerritoryQuery,
+} from '../territory/territory.validator.js';
 import { invalidateCache } from '../../middleware/cache.middleware.js';
 import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
@@ -12,8 +17,7 @@ export const createTerritory = async (
   const { name, area_id } = req.body;
   const newTerritory = await territoryService.createTerritory(name, area_id);
 
-  await invalidateCache('/territories*');
-  await invalidateCache('/territory/*');
+  await invalidateCache('territory');
 
   sendCreated(res, newTerritory);
 };
@@ -27,8 +31,7 @@ export const updateTerritory = async (
   const updates = req.body.data;
   const updatedTerritory = await territoryService.updateTerritory(id, updates);
 
-  await invalidateCache('/territories*');
-  await invalidateCache(`/territory/${id}`);
+  await invalidateCache('territory');
 
   sendSuccess(res, updatedTerritory);
 };
@@ -41,8 +44,7 @@ export const deleteTerritory = async (
   const { id } = req.params;
   await territoryService.deleteTerritory(id);
 
-  await invalidateCache('/territories*');
-  await invalidateCache(`/territory/${id}`);
+  await invalidateCache('territory', 'sales-representative');
 
   sendDeleted(res, 'Territory deleted successfully');
 };

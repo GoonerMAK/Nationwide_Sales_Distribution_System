@@ -1,6 +1,11 @@
 import type { Request, Response } from 'express';
 import * as retailerService from '../retailer/retailer.service.js';
-import type { RetailerParams, RetailerCreate, RetailerUpdate, RetailerQuery } from '../retailer/retailer.validator.js';
+import type {
+  RetailerParams,
+  RetailerCreate,
+  RetailerUpdate,
+  RetailerQuery,
+} from '../retailer/retailer.validator.js';
 import { invalidateCache } from '../../middleware/cache.middleware.js';
 import { sendSuccess, sendCreated, sendPaginated, sendDeleted } from '../../utils/response.js';
 
@@ -33,8 +38,7 @@ export const createRetailer = async (
     routes,
   );
 
-  await invalidateCache('/retailers*');
-  await invalidateCache('/retailer/*');
+  await invalidateCache('retailer');
 
   sendCreated(res, newRetailer);
 };
@@ -48,8 +52,7 @@ export const updateRetailer = async (
   const updates = req.body.data;
   const updatedRetailer = await retailerService.updateRetailer(id, updates);
 
-  await invalidateCache('/retailers*');
-  await invalidateCache(`/retailer/${id}`);
+  await invalidateCache('retailer');
 
   sendSuccess(res, updatedRetailer);
 };
@@ -62,8 +65,7 @@ export const deleteRetailer = async (
   const { id } = req.params;
   await retailerService.deleteRetailer(id);
 
-  await invalidateCache('/retailers*');
-  await invalidateCache(`/retailer/${id}`);
+  await invalidateCache('retailer');
 
   sendDeleted(res, 'Retailer deleted successfully');
 };
@@ -73,8 +75,28 @@ export const getRetailers = async (
   req: Request<unknown, unknown, unknown, RetailerQuery>,
   res: Response,
 ) => {
-  const { offset, limit, name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id, assigned } = req.query;
-  const filters = { name, phone, region_id, area_id, distributor_id, territory_id, sales_representative_id, assigned };
+  const {
+    offset,
+    limit,
+    name,
+    phone,
+    region_id,
+    area_id,
+    distributor_id,
+    territory_id,
+    sales_representative_id,
+    assigned,
+  } = req.query;
+  const filters = {
+    name,
+    phone,
+    region_id,
+    area_id,
+    distributor_id,
+    territory_id,
+    sales_representative_id,
+    assigned,
+  };
   const result = await retailerService.getRetailers(Number(offset), Number(limit), filters);
 
   sendPaginated(res, result.data, result.pagination);
