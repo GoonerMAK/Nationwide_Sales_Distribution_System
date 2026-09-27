@@ -1,183 +1,184 @@
 import prisma from '../../prisma.js';
+import { paginate } from '../../utils/pagination.js';
 import { NotFoundError } from '../../utils/errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 export const createRetailer = async (
-    name: string,
-    region_id: string,
-    area_id: string,
-    distributor_id: string,
-    territory_id: string,
-    points?: number,
-    phone?: string,
-    sales_representative_id?: string,
-    routes?: string
+  name: string,
+  region_id: string,
+  area_id: string,
+  distributor_id: string,
+  territory_id: string,
+  points?: number,
+  phone?: string,
+  sales_representative_id?: string,
+  routes?: string,
 ) => {
-    const [regionExists, areaExists, distributorExists, territoryExists, salesRepExists] = await Promise.all([
-        prisma.region.findUnique({ where: { id: region_id } }),
-        prisma.area.findUnique({ where: { id: area_id } }),
-        prisma.distributor.findUnique({ where: { id: distributor_id } }),
-        prisma.territory.findUnique({ where: { id: territory_id } }),
-        sales_representative_id ? prisma.salesRepresentative.findUnique({ where: { id: sales_representative_id } }) : null,
+  const [regionExists, areaExists, distributorExists, territoryExists, salesRepExists] =
+    await Promise.all([
+      prisma.region.findUnique({ where: { id: region_id } }),
+      prisma.area.findUnique({ where: { id: area_id } }),
+      prisma.distributor.findUnique({ where: { id: distributor_id } }),
+      prisma.territory.findUnique({ where: { id: territory_id } }),
+      sales_representative_id
+        ? prisma.salesRepresentative.findUnique({ where: { id: sales_representative_id } })
+        : null,
     ]);
 
-    if (!regionExists) throw new NotFoundError('Region');
-    if (!areaExists) throw new NotFoundError('Area');
-    if (!distributorExists) throw new NotFoundError('Distributor');
-    if (!territoryExists) throw new NotFoundError('Territory');
-    if (sales_representative_id && !salesRepExists) throw new NotFoundError('Sales representative');
+  if (!regionExists) throw new NotFoundError('Region');
+  if (!areaExists) throw new NotFoundError('Area');
+  if (!distributorExists) throw new NotFoundError('Distributor');
+  if (!territoryExists) throw new NotFoundError('Territory');
+  if (sales_representative_id && !salesRepExists) throw new NotFoundError('Sales representative');
 
-    return await prisma.retailer.create({
-        data: {
-            name,
-            phone,
-            region_id,
-            area_id,
-            distributor_id,
-            territory_id,
-            sales_representative_id,
-            points,
-            routes,
-        },
-    });
+  return await prisma.retailer.create({
+    data: {
+      name,
+      phone,
+      region_id,
+      area_id,
+      distributor_id,
+      territory_id,
+      sales_representative_id,
+      points,
+      routes,
+    },
+  });
 };
 
 export const updateRetailer = async (
-    id: string,
-    updates: {
-        name?: string;
-        phone?: string;
-        region_id?: string;
-        area_id?: string;
-        distributor_id?: string;
-        territory_id?: string;
-        sales_representative_id?: string;
-        points?: number;
-        routes?: string;
-    }
+  id: string,
+  updates: {
+    name?: string;
+    phone?: string;
+    region_id?: string;
+    area_id?: string;
+    distributor_id?: string;
+    territory_id?: string;
+    sales_representative_id?: string;
+    points?: number;
+    routes?: string;
+  },
 ) => {
-    const existingRetailer = await prisma.retailer.findUnique({
-        where: { id },
-    });
+  const existingRetailer = await prisma.retailer.findUnique({
+    where: { id },
+  });
 
-    if (!existingRetailer) {
-        throw new NotFoundError('Retailer');
-    }
+  if (!existingRetailer) {
+    throw new NotFoundError('Retailer');
+  }
 
-    const [regionExists, areaExists, distributorExists, territoryExists, salesRepExists] = await Promise.all([
-        updates.region_id ? prisma.region.findUnique({ where: { id: updates.region_id } }) : null,
-        updates.area_id ? prisma.area.findUnique({ where: { id: updates.area_id } }) : null,
-        updates.distributor_id ? prisma.distributor.findUnique({ where: { id: updates.distributor_id } }) : null,
-        updates.territory_id ? prisma.territory.findUnique({ where: { id: updates.territory_id } }) : null,
-        updates.sales_representative_id
-            ? prisma.salesRepresentative.findUnique({ where: { id: updates.sales_representative_id } })
-            : null,
+  const [regionExists, areaExists, distributorExists, territoryExists, salesRepExists] =
+    await Promise.all([
+      updates.region_id ? prisma.region.findUnique({ where: { id: updates.region_id } }) : null,
+      updates.area_id ? prisma.area.findUnique({ where: { id: updates.area_id } }) : null,
+      updates.distributor_id
+        ? prisma.distributor.findUnique({ where: { id: updates.distributor_id } })
+        : null,
+      updates.territory_id
+        ? prisma.territory.findUnique({ where: { id: updates.territory_id } })
+        : null,
+      updates.sales_representative_id
+        ? prisma.salesRepresentative.findUnique({ where: { id: updates.sales_representative_id } })
+        : null,
     ]);
 
-    if (updates.region_id && !regionExists) throw new NotFoundError('Region');
-    if (updates.area_id && !areaExists) throw new NotFoundError('Area');
-    if (updates.distributor_id && !distributorExists) throw new NotFoundError('Distributor');
-    if (updates.territory_id && !territoryExists) throw new NotFoundError('Territory');
-    if (updates.sales_representative_id && !salesRepExists) throw new NotFoundError('Sales representative');
+  if (updates.region_id && !regionExists) throw new NotFoundError('Region');
+  if (updates.area_id && !areaExists) throw new NotFoundError('Area');
+  if (updates.distributor_id && !distributorExists) throw new NotFoundError('Distributor');
+  if (updates.territory_id && !territoryExists) throw new NotFoundError('Territory');
+  if (updates.sales_representative_id && !salesRepExists)
+    throw new NotFoundError('Sales representative');
 
-    return await prisma.retailer.update({
-        where: { id },
-        data: updates,
-    });
+  return await prisma.retailer.update({
+    where: { id },
+    data: updates,
+  });
 };
 
 export const deleteRetailer = async (id: string) => {
-    const retailer = await prisma.retailer.findUnique({ where: { id } });
-    if (!retailer) throw new NotFoundError('Retailer');
+  const retailer = await prisma.retailer.findUnique({ where: { id } });
+  if (!retailer) throw new NotFoundError('Retailer');
 
-    return prisma.retailer.delete({ where: { id } });
+  return prisma.retailer.delete({ where: { id } });
 };
 
 export const getRetailers = async (
-    offset: number,
-    limit: number,
-    filters?: {
-        name?: string;
-        phone?: string;
-        region_id?: string;
-        area_id?: string;
-        distributor_id?: string;
-        territory_id?: string;
-        sales_representative_id?: string;
-        assigned?: boolean;
-    }
+  offset: number,
+  limit: number,
+  filters?: {
+    name?: string;
+    phone?: string;
+    region_id?: string;
+    area_id?: string;
+    distributor_id?: string;
+    territory_id?: string;
+    sales_representative_id?: string;
+    assigned?: boolean;
+  },
 ) => {
-    const where: Prisma.RetailerWhereInput = {};
-    
-    if (filters?.name) {
-        where.name = { contains: filters.name, mode: 'insensitive' };
-    }
-    if (filters?.phone) {
-        where.phone = { contains: filters.phone };
-    }
-    if (filters?.region_id) {
-        where.region_id = filters.region_id;
-    }
-    if (filters?.area_id) {
-        where.area_id = filters.area_id;
-    }
-    if (filters?.distributor_id) {
-        where.distributor_id = filters.distributor_id;
-    }
-    if (filters?.territory_id) {
-        where.territory_id = filters.territory_id;
-    }
-    if (filters?.sales_representative_id) {
-        where.sales_representative_id = filters.sales_representative_id;
-    } else if (filters?.assigned === true) {
-        where.NOT = { sales_representative_id: null };
-    } else if (filters?.assigned === false) {
-        where.sales_representative_id = null;
-    }
+  const where: Prisma.RetailerWhereInput = {};
 
-    const [retailers, totalCount] = await prisma.$transaction([
-        prisma.retailer.findMany({
-            where,
-            skip: offset,
-            take: limit,
-            select: {
-                id: true,
-                name: true,
-                phone: true,
-                region_id: true,
-                area_id: true,
-                distributor_id: true,
-                territory_id: true,
-                sales_representative_id: true,
-                points: true,
-                routes: true,
-                created_at: true,
-                updated_at: true,
-            },
-        }),
-        prisma.retailer.count({ where }),
-    ]);
+  if (filters?.name) {
+    where.name = { contains: filters.name, mode: 'insensitive' };
+  }
+  if (filters?.phone) {
+    where.phone = { contains: filters.phone };
+  }
+  if (filters?.region_id) {
+    where.region_id = filters.region_id;
+  }
+  if (filters?.area_id) {
+    where.area_id = filters.area_id;
+  }
+  if (filters?.distributor_id) {
+    where.distributor_id = filters.distributor_id;
+  }
+  if (filters?.territory_id) {
+    where.territory_id = filters.territory_id;
+  }
+  if (filters?.sales_representative_id) {
+    where.sales_representative_id = filters.sales_representative_id;
+  } else if (filters?.assigned === true) {
+    where.NOT = { sales_representative_id: null };
+  } else if (filters?.assigned === false) {
+    where.sales_representative_id = null;
+  }
 
-    return {
-        data: retailers,
-        pagination: {
-            offset,
-            limit,
-            totalItems: totalCount,
-            totalPages: Math.ceil(totalCount / limit),
-            hasMore: (offset + limit) < totalCount,
-        }
-    };
+  const fetchPageRows = () =>
+    prisma.retailer.findMany({
+      where,
+      skip: offset,
+      take: limit,
+      orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        region_id: true,
+        area_id: true,
+        distributor_id: true,
+        territory_id: true,
+        sales_representative_id: true,
+        points: true,
+        routes: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+  const countMatchingRows = () => prisma.retailer.count({ where });
+
+  return paginate(offset, limit, fetchPageRows, countMatchingRows);
 };
 
 export const getRetailerById = async (id: string) => {
-    const retailer = await prisma.retailer.findUnique({
-        where: { id },
-    });
+  const retailer = await prisma.retailer.findUnique({
+    where: { id },
+  });
 
-    if (!retailer) {
-        throw new NotFoundError('Retailer');
-    }
+  if (!retailer) {
+    throw new NotFoundError('Retailer');
+  }
 
-    return retailer;
+  return retailer;
 };

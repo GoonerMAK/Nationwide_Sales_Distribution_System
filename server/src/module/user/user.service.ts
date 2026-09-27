@@ -1,4 +1,5 @@
 import prisma from '../../prisma.js';
+import { paginate } from '../../utils/pagination.js';
 import bcrypt from 'bcrypt';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 
@@ -72,30 +73,19 @@ export const deleteUser = async (id: string) => {
 };
 
 export const getAllUsers = async (offset: number, limit: number) => {
-  const [users, totalCount] = await prisma.$transaction([
+  const fetchPageRows = () =>
     prisma.user.findMany({
       skip: offset,
       take: limit,
+      orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: {
         id: true,
         email: true,
       },
-    }),
-    prisma.user.count(),
-  ]);
+    });
+  const countMatchingRows = () => prisma.user.count();
 
-  const paginatedUsers = {
-    data: users,
-    pagination: {
-      offset,
-      limit,
-      totalItems: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      hasMore: offset + limit < totalCount,
-    },
-  };
-
-  return paginatedUsers;
+  return paginate(offset, limit, fetchPageRows, countMatchingRows);
 };
 
 export const getUserById = async (id: string) => {

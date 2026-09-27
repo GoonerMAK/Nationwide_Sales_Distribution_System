@@ -1,4 +1,5 @@
 import prisma from '../../prisma.js';
+import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
@@ -78,26 +79,17 @@ export const getAreas = async (
     where.region_id = filters.region_id;
   }
 
-  const [data, totalItems] = await prisma.$transaction([
+  const fetchPageRows = () =>
     prisma.area.findMany({
       where,
       skip: offset,
       take: limit,
+      orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: { id: true, name: true, region_id: true, created_at: true, updated_at: true },
-    }),
-    prisma.area.count({ where }),
-  ]);
+    });
+  const countMatchingRows = () => prisma.area.count({ where });
 
-  return {
-    data,
-    pagination: {
-      offset,
-      limit,
-      totalItems,
-      totalPages: Math.ceil(totalItems / limit),
-      hasMore: offset + limit < totalItems,
-    },
-  };
+  return paginate(offset, limit, fetchPageRows, countMatchingRows);
 };
 
 /** Fetches a single area by ID. */

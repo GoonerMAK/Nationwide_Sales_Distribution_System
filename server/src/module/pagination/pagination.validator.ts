@@ -1,13 +1,16 @@
 import { z } from 'zod';
 
+/** Deep offsets make Postgres read and discard every skipped row. */
+const MAX_OFFSET = 10_000;
+
 /** Reusable pagination fields for query schemas. */
 export const paginationSchema = z.object({
   offset: z
     .string()
     .default('0')
     .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val) && val >= 0, {
-      message: 'Offset must be a non-negative number',
+    .refine((val) => !isNaN(val) && val >= 0 && val <= MAX_OFFSET, {
+      message: `Offset must be between 0 and ${MAX_OFFSET}`,
     })
     .optional(),
   limit: z

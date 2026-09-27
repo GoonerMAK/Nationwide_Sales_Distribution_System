@@ -1,4 +1,5 @@
 import prisma from '../../prisma.js';
+import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
@@ -46,37 +47,24 @@ export const deleteRegion = async (id: string) => {
 };
 
 /** Fetches paginated regions with optional name filter. */
-export const getRegions = async (
-  offset: number,
-  limit: number,
-  filters?: { name?: string },
-) => {
+export const getRegions = async (offset: number, limit: number, filters?: { name?: string }) => {
   const where: Prisma.RegionWhereInput = {};
 
   if (filters?.name) {
     where.name = { contains: filters.name, mode: 'insensitive' };
   }
 
-  const [data, totalItems] = await prisma.$transaction([
+  const fetchPageRows = () =>
     prisma.region.findMany({
       where,
       skip: offset,
       take: limit,
+      orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: { id: true, name: true, created_at: true, updated_at: true },
-    }),
-    prisma.region.count({ where }),
-  ]);
+    });
+  const countMatchingRows = () => prisma.region.count({ where });
 
-  return {
-    data,
-    pagination: {
-      offset,
-      limit,
-      totalItems,
-      totalPages: Math.ceil(totalItems / limit),
-      hasMore: offset + limit < totalItems,
-    },
-  };
+  return paginate(offset, limit, fetchPageRows, countMatchingRows);
 };
 
 /** Fetches a single region by ID. */

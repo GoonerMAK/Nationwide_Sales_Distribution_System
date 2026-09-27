@@ -1,4 +1,5 @@
 import prisma from '../../prisma.js';
+import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
@@ -78,26 +79,17 @@ export const getTerritories = async (
     where.area_id = filters.area_id;
   }
 
-  const [data, totalItems] = await prisma.$transaction([
+  const fetchPageRows = () =>
     prisma.territory.findMany({
       where,
       skip: offset,
       take: limit,
+      orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: { id: true, name: true, area_id: true, created_at: true, updated_at: true },
-    }),
-    prisma.territory.count({ where }),
-  ]);
+    });
+  const countMatchingRows = () => prisma.territory.count({ where });
 
-  return {
-    data,
-    pagination: {
-      offset,
-      limit,
-      totalItems,
-      totalPages: Math.ceil(totalItems / limit),
-      hasMore: offset + limit < totalItems,
-    },
-  };
+  return paginate(offset, limit, fetchPageRows, countMatchingRows);
 };
 
 /** Fetches a single territory by ID. */
