@@ -63,6 +63,9 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
+    await prisma.$queryRaw`SELECT 1`;
+    logger.info('Postgres connected successfully');
+
     await connectRedis();
     logger.info('Redis connected successfully');
 
