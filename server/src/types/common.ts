@@ -1,8 +1,6 @@
 export interface PaginationMeta {
   offset: number;
   limit: number;
-  totalItems: number;
-  totalPages: number;
   hasMore: boolean;
 }
 

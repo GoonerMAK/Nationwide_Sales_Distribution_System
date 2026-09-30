@@ -145,11 +145,11 @@ export const getRetailers = async (
     where.sales_representative_id = null;
   }
 
-  const fetchPageRows = () =>
+  const fetchPageRows = (take: number) =>
     prisma.retailer.findMany({
       where,
       skip: offset,
-      take: limit,
+      take,
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: {
         id: true,
@@ -166,9 +166,8 @@ export const getRetailers = async (
         updated_at: true,
       },
     });
-  const countMatchingRows = () => prisma.retailer.count({ where });
 
-  return paginate(offset, limit, fetchPageRows, countMatchingRows);
+  return paginate(offset, limit, fetchPageRows);
 };
 
 export const getRetailerById = async (id: string) => {

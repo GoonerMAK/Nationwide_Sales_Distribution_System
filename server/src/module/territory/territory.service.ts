@@ -79,17 +79,16 @@ export const getTerritories = async (
     where.area_id = filters.area_id;
   }
 
-  const fetchPageRows = () =>
+  const fetchPageRows = (take: number) =>
     prisma.territory.findMany({
       where,
       skip: offset,
-      take: limit,
+      take,
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: { id: true, name: true, area_id: true, created_at: true, updated_at: true },
     });
-  const countMatchingRows = () => prisma.territory.count({ where });
 
-  return paginate(offset, limit, fetchPageRows, countMatchingRows);
+  return paginate(offset, limit, fetchPageRows);
 };
 
 /** Fetches a single territory by ID. */

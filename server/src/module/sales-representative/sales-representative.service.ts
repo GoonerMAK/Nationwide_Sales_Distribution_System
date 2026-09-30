@@ -129,11 +129,11 @@ export const getSalesRepresentatives = async (
     where.territory_id = filters.territory_id;
   }
 
-  const fetchPageRows = () =>
+  const fetchPageRows = (take: number) =>
     prisma.salesRepresentative.findMany({
       where,
       skip: offset,
-      take: limit,
+      take,
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: {
         id: true,
@@ -148,9 +148,8 @@ export const getSalesRepresentatives = async (
         updated_at: true,
       },
     });
-  const countMatchingRows = () => prisma.salesRepresentative.count({ where });
 
-  return paginate(offset, limit, fetchPageRows, countMatchingRows);
+  return paginate(offset, limit, fetchPageRows);
 };
 
 export const getSalesRepresentativeById = async (id: string) => {

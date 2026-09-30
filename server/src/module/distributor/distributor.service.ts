@@ -63,11 +63,11 @@ export const getDistributors = async (
     where.name = { contains: filters.name, mode: 'insensitive' };
   }
 
-  const fetchPageRows = () =>
+  const fetchPageRows = (take: number) =>
     prisma.distributor.findMany({
       where,
       skip: offset,
-      take: limit,
+      take,
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: {
         id: true,
@@ -76,9 +76,8 @@ export const getDistributors = async (
         updated_at: true,
       },
     });
-  const countMatchingRows = () => prisma.distributor.count({ where });
 
-  return paginate(offset, limit, fetchPageRows, countMatchingRows);
+  return paginate(offset, limit, fetchPageRows);
 };
 
 export const getDistributorById = async (id: string) => {

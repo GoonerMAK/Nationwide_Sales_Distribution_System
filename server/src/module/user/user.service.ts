@@ -73,19 +73,18 @@ export const deleteUser = async (id: string) => {
 };
 
 export const getAllUsers = async (offset: number, limit: number) => {
-  const fetchPageRows = () =>
+  const fetchPageRows = (take: number) =>
     prisma.user.findMany({
       skip: offset,
-      take: limit,
+      take,
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: {
         id: true,
         email: true,
       },
     });
-  const countMatchingRows = () => prisma.user.count();
 
-  return paginate(offset, limit, fetchPageRows, countMatchingRows);
+  return paginate(offset, limit, fetchPageRows);
 };
 
 export const getUserById = async (id: string) => {

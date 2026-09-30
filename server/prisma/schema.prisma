@@ -96,12 +96,12 @@ model Retailer {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@index([sales_representative_id]) 
-  @@index([region_id])                
-  @@index([area_id])                  
-  @@index([territory_id])             
-  @@index([distributor_id])           
-  @@index([name])                     
+  @@index([sales_representative_id, id])
+  @@index([region_id, id])
+  @@index([area_id, id])
+  @@index([territory_id, id])
+  @@index([distributor_id, id])
+  @@index([name])
   // Trigram GIN indexes let `contains` (LIKE/ILIKE '%x%') searches use an index
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Retailer_name_trgm_idx")
   @@index([phone(ops: raw("gin_trgm_ops"))], type: Gin, map: "Retailer_phone_trgm_idx")
@@ -130,7 +130,7 @@ model SalesRepresentative {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@index([region_id])
-  @@index([area_id])
-  @@index([territory_id])
+  @@index([region_id, id])
+  @@index([area_id, id])
+  @@index([territory_id, id])
 }

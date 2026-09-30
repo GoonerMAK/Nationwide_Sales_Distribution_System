@@ -54,17 +54,16 @@ export const getRegions = async (offset: number, limit: number, filters?: { name
     where.name = { contains: filters.name, mode: 'insensitive' };
   }
 
-  const fetchPageRows = () =>
+  const fetchPageRows = (take: number) =>
     prisma.region.findMany({
       where,
       skip: offset,
-      take: limit,
+      take,
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: { id: true, name: true, created_at: true, updated_at: true },
     });
-  const countMatchingRows = () => prisma.region.count({ where });
 
-  return paginate(offset, limit, fetchPageRows, countMatchingRows);
+  return paginate(offset, limit, fetchPageRows);
 };
 
 /** Fetches a single region by ID. */
