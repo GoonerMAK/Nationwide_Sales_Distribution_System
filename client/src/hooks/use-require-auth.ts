@@ -7,13 +7,14 @@ import { useCurrentUser } from "@/lib/auth";
 /** Redirects to /login when there's no authenticated session. Use in any page that requires one. */
 export function useRequireAuth() {
   const router = useRouter();
-  const { data: user, isLoading, isError } = useCurrentUser();
+  const { data: user, isLoading } = useCurrentUser();
+  const isUnauthenticated = !isLoading && !user;
 
   useEffect(() => {
-    if (!isLoading && isError) {
+    if (isUnauthenticated) {
       router.replace("/login");
     }
-  }, [isLoading, isError, router]);
+  }, [isUnauthenticated, router]);
 
-  return { user, isPending: isLoading || isError };
+  return { user, isPending: isLoading || isUnauthenticated };
 }

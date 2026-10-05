@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,16 +14,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useLogin } from "@/lib/auth";
+import { useCurrentUser, useLogin } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const login = useLogin();
+  const { data: user } = useCurrentUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/");
+    }
+  }, [user, router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,7 +38,6 @@ export default function LoginPage() {
 
     try {
       await login.mutateAsync({ email, password });
-      router.push("/");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Unable to sign in. Please try again.");
     }
