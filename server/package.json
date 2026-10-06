@@ -11,6 +11,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "npm test -- --watch",
+    "test:coverage": "npm test -- --coverage",
     "format": "prettier --write \"src/**/*.ts\" \"prisma/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"prisma/**/*.ts\"",
     "seed": "tsx prisma/seed.ts",
@@ -38,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@jest/globals": "^30.5.2",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
@@ -45,8 +49,10 @@
     "@types/node": "^24.10.4",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.5.2",
     "prettier": "^3.6.2",
     "prisma": "^7.10.0",
+    "ts-jest": "^29.4.14",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.47.0"
