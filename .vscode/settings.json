@@ -1,0 +1,5 @@
+{
+  "files.exclude": {
+    "**/.husky/_": true
+  }
+}
