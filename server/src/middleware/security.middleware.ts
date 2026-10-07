@@ -16,29 +16,6 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
   next();
 }
 
-/** CORS middleware with configurable allowed origins. */
-export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const origin = req.headers.origin || '';
-  const allowedOrigins = env.isDev
-    ? ['http://localhost:3000', 'http://localhost:5173', env.FRONTEND_URL]
-    : [env.FRONTEND_URL];
-
-  if (env.isDev || allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-  if (req.method === 'OPTIONS') {
-    res.status(HTTP_STATUS.NO_CONTENT).end();
-    return;
-  }
-
-  next();
-}
-
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -53,14 +30,17 @@ export function rateLimiter(windowMs = 60000, maxRequests = 100) {
   const store = new Map<string, RateLimitEntry>();
 
   // Periodic cleanup every 5 minutes
-  const cleanupInterval = setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store) {
-      if (now > entry.resetAt) {
-        store.delete(key);
+  const cleanupInterval = setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, entry] of store) {
+        if (now > entry.resetAt) {
+          store.delete(key);
+        }
       }
-    }
-  }, 5 * 60 * 1000);
+    },
+    5 * 60 * 1000,
+  );
 
   // Allow garbage collection of the interval
   if (cleanupInterval.unref) {

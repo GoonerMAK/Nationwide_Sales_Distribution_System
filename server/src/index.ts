@@ -6,7 +6,8 @@ import prisma from './prisma.js';
 import { logger } from './utils/logger.js';
 import { requestIdMiddleware } from './middleware/request-id.middleware.js';
 import { requestLoggerMiddleware } from './middleware/request-logger.middleware.js';
-import { securityHeaders, corsMiddleware, rateLimiter } from './middleware/security.middleware.js';
+import { securityHeaders, rateLimiter } from './middleware/security.middleware.js';
+import { corsMiddleware } from './middleware/cors.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { HTTP_STATUS } from './constants/http-status.js';
 
@@ -25,7 +26,7 @@ export const app = express();
 app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
 app.use(securityHeaders);
-app.use(corsMiddleware);
+app.use(corsMiddleware(env.CORS_ORIGINS));
 app.use(rateLimiter());
 app.use(express.json());
 app.use(cookieParser());

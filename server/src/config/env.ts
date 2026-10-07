@@ -12,7 +12,13 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default('http://localhost:3000'),
 });
 
+const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:5173'];
+
 const parsed = envSchema.parse(process.env);
+
+const frontendUrls = parsed.FRONTEND_URL.split(',')
+  .map((url) => url.trim())
+  .filter(Boolean);
 
 export const env = {
   PORT: parseInt(parsed.PORT, 10),
@@ -22,5 +28,6 @@ export const env = {
   NODE_ENV: parsed.NODE_ENV,
   isDev: parsed.NODE_ENV === 'development',
   isProd: parsed.NODE_ENV === 'production',
-  FRONTEND_URL: parsed.FRONTEND_URL,
+  CORS_ORIGINS:
+    parsed.NODE_ENV === 'development' ? [...DEV_ORIGINS, ...frontendUrls] : frontendUrls,
 };
