@@ -29,8 +29,8 @@ export default tseslint.config(
     },
   },
   {
-    // The logger and the seed script are the places console output is intentional.
-    files: ['src/utils/logger.ts', 'prisma/seed.ts'],
+    // The logger and the CLI scripts in prisma/ are the places console output is intentional.
+    files: ['src/utils/logger.ts', 'prisma/seed.ts', 'prisma/create-admin.ts'],
     rules: { 'no-console': 'off' },
   },
   prettier,

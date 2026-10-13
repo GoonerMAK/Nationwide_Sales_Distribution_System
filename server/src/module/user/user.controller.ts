@@ -10,8 +10,7 @@ export const createUser = async (
   req: Request<unknown, unknown, UserCreate, unknown>,
   res: Response,
 ) => {
-  const { password, email } = req.body;
-  const newUser = await userService.createUser(password, email);
+  const newUser = await userService.createUser(req.body);
 
   sendCreated(res, newUser);
 };

@@ -7,15 +7,79 @@ datasource db {
   provider = "postgresql"
 }
 
+// User, Session, Account and Verification are owned by Better Auth (see src/auth.ts).
+// Column names are snake_case here and mapped to Better Auth's camelCase fields in the auth config,
+// so any field added or renamed here must be mirrored there.
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
-  password String
+  id             String  @id @default(uuid())
+  name           String
+  email          String  @unique
+  email_verified Boolean @default(false)
+  image          String?
 
+  // admin plugin
+  role        String?   @default("user")
+  banned      Boolean?  @default(false)
+  ban_reason  String?
+  ban_expires DateTime?
+
+  sessions             Session[]
+  accounts             Account[]
   sales_representative SalesRepresentative?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model Session {
+  id              String   @id @default(uuid())
+  token           String   @unique
+  expires_at      DateTime
+  ip_address      String?
+  user_agent      String?
+  user_id         String
+  impersonated_by String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([user_id])
+}
+
+/// Credential (email + password) logins live here with provider_id = "credential"; the password hash is NOT on User.
+model Account {
+  id                       String    @id @default(uuid())
+  account_id               String
+  provider_id              String
+  user_id                  String
+  access_token             String?
+  refresh_token            String?
+  id_token                 String?
+  access_token_expires_at  DateTime?
+  refresh_token_expires_at DateTime?
+  scope                    String?
+  password                 String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([user_id])
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expires_at DateTime
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 model Region {

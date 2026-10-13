@@ -1,5 +1,6 @@
 import express from 'express';
-import cookieParser from 'cookie-parser';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './auth.js';
 import { env } from './config/env.js';
 import { connectRedis, disconnectRedis } from './redis.js';
 import prisma from './prisma.js';
@@ -11,7 +12,6 @@ import { corsMiddleware } from './middleware/cors.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { HTTP_STATUS } from './constants/http-status.js';
 
-import { authRouter } from './module/auth/auth.routes.js';
 import { userRouter } from './module/user/user.route.js';
 import { territoryRouter } from './module/territory/territory.route.js';
 import { regionRouter } from './module/region/region.route.js';
@@ -28,8 +28,12 @@ app.use(requestLoggerMiddleware);
 app.use(securityHeaders);
 app.use(corsMiddleware(env.CORS_ORIGINS));
 app.use(rateLimiter());
+
+// Better Auth handles all /api/auth/* routes (sign-in, sign-out, get-session, admin/*).
+// It must be mounted before express.json(), which would otherwise consume the request body.
+app.all('/api/auth/*splat', toNodeHandler(auth));
+
 app.use(express.json());
-app.use(cookieParser());
 
 // Health check (served at both /health and /api/health)
 app.get(['/health', '/api/health'], (_req, res) => {
@@ -42,7 +46,6 @@ app.get(['/health', '/api/health'], (_req, res) => {
 // Routes (all API routes live under /api; /health stays at the root for probes)
 const API_PREFIX = '/api';
 
-app.use(`${API_PREFIX}/auth`, authRouter);
 app.use(API_PREFIX, userRouter);
 app.use(API_PREFIX, regionRouter);
 app.use(API_PREFIX, territoryRouter);

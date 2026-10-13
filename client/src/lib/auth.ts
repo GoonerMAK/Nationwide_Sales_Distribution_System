@@ -1,22 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "./api";
+import { ApiError } from "./api";
+import { authClient } from "./auth-client";
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  created_at: string;
-  updated_at: string;
-}
+export type AuthUser = typeof authClient.$Infer.Session.user;
 
 export const authUserQueryKey = ["auth", "user"] as const;
 
-/** Fetches the currently authenticated user from the JWT cookie. */
+/** Better Auth calls resolve to `{ data, error }` instead of throwing; this turns errors into ApiError for React Query. */
+async function unwrap<T>(
+  call: Promise<{
+    data: T | null;
+    error: { message?: string; status: number; statusText: string } | null;
+  }>,
+): Promise<T | null> {
+  const { data, error } = await call;
+  if (error) {
+    throw new ApiError(error.message ?? error.statusText, error.status);
+  }
+  return data;
+}
+
+/** Fetches the current session's user, or null when signed out. */
 export function useCurrentUser() {
   return useQuery({
     queryKey: authUserQueryKey,
     queryFn: async () => {
-      const { user } = await apiFetch<{ user: AuthUser }>("/auth/user");
-      return user;
+      const session = await unwrap(authClient.getSession());
+      return session?.user ?? null;
     },
     retry: false,
   });
@@ -27,13 +37,9 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (credentials: { email: string; password: string }) =>
-      apiFetch<{ user: AuthUser; token: string }>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      }),
-    onSuccess: ({ user }) => {
-      queryClient.setQueryData(authUserQueryKey, user);
-    },
+      unwrap(authClient.signIn.email(credentials)),
+    // Refetch the full session (includes admin-plugin fields like role) rather than trusting the sign-in payload.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: authUserQueryKey }),
   });
 }
 
@@ -41,7 +47,7 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => apiFetch("/auth/logout", { method: "POST" }),
+    mutationFn: () => unwrap(authClient.signOut()),
     onSuccess: () => {
       queryClient.setQueryData(authUserQueryKey, null);
     },

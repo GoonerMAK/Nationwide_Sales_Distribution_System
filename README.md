@@ -12,7 +12,7 @@ An app that would help sale representatives (SRs) sell products to retailers acr
 ```bash
 # 1. Environment files - copy each example and fill in the values
 cp .env.example .env                  # docker-compose credentials (postgres user/password/db)
-cp server/.env.example server/.env    # DATABASE_URL, SECRET, PORT, REDIS_URL, FRONTEND_URL
+cp server/.env.example server/.env    # DATABASE_URL, BETTER_AUTH_SECRET, ADMIN_*, PORT, REDIS_URL, FRONTEND_URL
 cp client/.env.example client/.env.local
 
 # 2. Start Postgres + Redis (both have healthchecks, so `up -d` waits until they are ready)
@@ -25,7 +25,10 @@ npm run install:all
 # 4. Apply migrations and seed the database
 npm run db:setup
 
-# 5. Run both apps (server on PORT, client on 3000)
+# 5. Create the first admin (public sign-up is disabled; uses ADMIN_* from server/.env)
+npm --prefix server run create-admin
+
+# 6. Run both apps (server on PORT, client on 3000)
 npm run dev
 ```
 

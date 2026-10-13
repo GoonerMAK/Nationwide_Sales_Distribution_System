@@ -17,7 +17,7 @@ export function requestLoggerMiddleware(req: Request, res: Response, next: NextF
           requestId: req.requestId,
           statusCode: res.statusCode,
           durationMs: Math.round(durationMs * 100) / 100,
-          userId: req.user?.sub ?? req.user?.id,
+          userId: req.user?.id,
           ip: req.ip,
         });
       } catch (err) {

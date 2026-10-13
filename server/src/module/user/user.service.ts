@@ -1,35 +1,39 @@
 import prisma from '../../prisma.js';
+import { auth } from '../../auth.js';
 import { paginate } from '../../utils/pagination.js';
-import bcrypt from 'bcrypt';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import type { UserCreate } from './user.validator.js';
 
-const SALT_ROUNDS = 10;
+/** Better Auth stores email+password logins as an Account row with this provider id. */
+const CREDENTIAL_PROVIDER_ID = 'credential';
 
-export const createUser = async (password: string, email: string) => {
-  const existingEmail = await prisma.user.findUnique({
-    where: { email },
-  });
+/**
+ * Creates a user with a credential account through Better Auth, so the password is hashed
+ * with the same algorithm Better Auth verifies at sign-in.
+ * Called without request headers: the route is already restricted to admins by requireRole.
+ */
+export const createUser = async ({ name, email, password, role }: UserCreate) => {
+  const normalizedEmail = email.toLowerCase();
+  const existingEmail = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
   if (existingEmail) {
     throw new ConflictError('Email already exists');
   }
 
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-  return await prisma.user.create({
-    data: {
-      password: hashedPassword,
-      email,
-    },
-    omit: { password: true },
+  const { user } = await auth.api.createUser({
+    body: { name, email: normalizedEmail, password, role: role ?? 'user' },
   });
+
+  return user;
 };
 
 export const updateUser = async (
   id: string,
   updates: {
-    password?: string;
+    name?: string;
     email?: string;
+    password?: string;
+    role?: string;
   },
 ) => {
   const existingUser = await prisma.user.findUnique({
@@ -40,28 +44,53 @@ export const updateUser = async (
     throw new NotFoundError('User');
   }
 
-  // Checking if the new email is already in use by another user
-  if (updates.email) {
+  const { password, ...profile } = updates;
+  if (profile.email) {
+    profile.email = profile.email.toLowerCase();
+
+    // Checking if the new email is already in use by another user
     const emailExists = await prisma.user.findFirst({
       where: {
-        email: updates.email,
+        email: profile.email,
         NOT: { id },
       },
     });
 
     if (emailExists) {
-      throw new ConflictError(`Email "${updates.email}" is already in use`);
+      throw new ConflictError(`Email "${profile.email}" is already in use`);
     }
   }
 
-  if (updates.password) {
-    updates.password = await bcrypt.hash(updates.password, SALT_ROUNDS);
-  }
+  const passwordHash = password ? await (await auth.$context).password.hash(password) : undefined;
 
-  return await prisma.user.update({
-    where: { id },
-    data: updates,
-    omit: { password: true },
+  return prisma.$transaction(async (tx) => {
+    if (passwordHash) {
+      const credential = await tx.account.findFirst({
+        where: { user_id: id, provider_id: CREDENTIAL_PROVIDER_ID },
+      });
+
+      // Users migrated from the old JWT auth have no credential account yet.
+      if (credential) {
+        await tx.account.update({ where: { id: credential.id }, data: { password: passwordHash } });
+      } else {
+        await tx.account.create({
+          data: {
+            user_id: id,
+            account_id: id,
+            provider_id: CREDENTIAL_PROVIDER_ID,
+            password: passwordHash,
+          },
+        });
+      }
+
+      // A password change signs the user out everywhere.
+      await tx.session.deleteMany({ where: { user_id: id } });
+    }
+
+    return tx.user.update({
+      where: { id },
+      data: profile,
+    });
   });
 };
 
@@ -69,7 +98,8 @@ export const deleteUser = async (id: string) => {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) throw new NotFoundError('User');
 
-  return prisma.user.delete({ where: { id }, omit: { password: true } });
+  // Sessions and accounts are removed by the ON DELETE CASCADE foreign keys.
+  return prisma.user.delete({ where: { id } });
 };
 
 export const getAllUsers = async (offset: number, limit: number) => {
@@ -80,7 +110,9 @@ export const getAllUsers = async (offset: number, limit: number) => {
       orderBy: { id: 'asc' }, // PK index: stable pages, no extra sort
       select: {
         id: true,
+        name: true,
         email: true,
+        role: true,
       },
     });
 
@@ -90,7 +122,6 @@ export const getAllUsers = async (offset: number, limit: number) => {
 export const getUserById = async (id: string) => {
   const user = await prisma.user.findUnique({
     where: { id },
-    omit: { password: true },
   });
 
   if (!user) {

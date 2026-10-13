@@ -178,10 +178,13 @@ async function main() {
   const totalSalesReps = 2000;
   const repIndexes = Array.from({ length: totalSalesReps }, (_, idx) => idx);
 
+  // Seeded reps get no credential Account, so they cannot sign in until an admin sets a password.
+  // Run `npm run create-admin` after seeding: clearing users above also removes the admin.
   const createdUsers = await prisma.user.createManyAndReturn({
     data: repIndexes.map((idx) => ({
       email: `salesrep${idx}@example.com`,
-      password: `$2b$10$hashedpassword${idx}`,
+      name: `Sales Rep ${idx}`,
+      role: 'user',
     })),
     select: { id: true, email: true },
   });
