@@ -3,7 +3,7 @@ import { HTTP_STATUS } from '../constants/http-status.js';
 
 const ALLOWED_METHODS = 'GET, POST, PUT, DELETE, OPTIONS';
 const ALLOWED_HEADERS = 'Content-Type, Authorization';
-const EXPOSED_HEADERS = 'X-Request-ID, X-RateLimit-Limit, X-RateLimit-Remaining';
+const EXPOSED_HEADERS = 'X-Request-ID, X-RateLimit-Limit, X-RateLimit-Remaining, Retry-After';
 const PREFLIGHT_MAX_AGE_SECONDS = 600;
 
 /** CORS middleware that only allows exact-match origins from the allowlist. */

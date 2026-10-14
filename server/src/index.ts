@@ -7,7 +7,8 @@ import prisma from './prisma.js';
 import { logger } from './utils/logger.js';
 import { requestIdMiddleware } from './middleware/request-id.middleware.js';
 import { requestLoggerMiddleware } from './middleware/request-logger.middleware.js';
-import { securityHeaders, rateLimiter } from './middleware/security.middleware.js';
+import { securityHeaders } from './middleware/security.middleware.js';
+import { apiRateLimiter, loginRateLimiter } from './middleware/rate-limit.middleware.js';
 import { corsMiddleware } from './middleware/cors.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { HTTP_STATUS } from './constants/http-status.js';
@@ -27,7 +28,9 @@ app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
 app.use(securityHeaders);
 app.use(corsMiddleware(env.CORS_ORIGINS));
-app.use(rateLimiter());
+app.use(apiRateLimiter);
+
+app.use('/api/auth/sign-in', loginRateLimiter);
 
 // Better Auth handles all /api/auth/* routes (sign-in, sign-out, get-session, admin/*).
 // It must be mounted before express.json(), which would otherwise consume the request body.
