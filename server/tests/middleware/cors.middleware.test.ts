@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
-import { corsMiddleware } from './cors.middleware.js';
+import { corsMiddleware } from '../../src/middleware/cors.middleware.js';
 
 const ALLOWED = 'http://localhost:3000';
 

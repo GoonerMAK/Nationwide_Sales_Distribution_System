@@ -9,14 +9,15 @@ const chain = {
   exec,
 };
 
-jest.unstable_mockModule('../redis.js', () => ({
+jest.unstable_mockModule('../../src/redis.js', () => ({
   default: { multi: () => chain },
 }));
-jest.unstable_mockModule('../utils/logger.js', () => ({
+jest.unstable_mockModule('../../src/utils/logger.js', () => ({
   logger: { error: jest.fn() },
 }));
 
-const { estimateRequestCount, rateLimiter } = await import('./rate-limit.middleware.js');
+const { estimateRequestCount, rateLimiter } =
+  await import('../../src/middleware/rate-limit.middleware.js');
 
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 100;

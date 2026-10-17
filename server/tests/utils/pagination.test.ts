@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { paginate } from './pagination.js';
+import { paginate } from '../../src/utils/pagination.js';
 
 describe('paginate', () => {
   it('requests one extra row to detect the next page', async () => {

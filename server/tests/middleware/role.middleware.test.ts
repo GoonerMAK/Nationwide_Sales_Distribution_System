@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
-import { parseRoles, requireRole } from './role.middleware.js';
-import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
+import { parseRoles, requireRole } from '../../src/middleware/role.middleware.js';
+import { ForbiddenError, UnauthorizedError } from '../../src/utils/errors.js';
 
 function run(user: { role?: string | null } | undefined, ...allowed: string[]) {
   const req = { user } as unknown as Request;
