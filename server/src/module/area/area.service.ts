@@ -1,6 +1,8 @@
 import prisma from '../../prisma.js';
 import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import { changedFields, hasChanges } from '../../utils/changed-fields.js';
+import { orNotFound } from '../../utils/prisma-errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 /** Creates a new area within a region. Validates region exists and name is unique within region. */
@@ -24,45 +26,43 @@ export const createArea = async (name: string, region_id: string) => {
 
 /** Updates an area by ID. Validates region exists and name uniqueness within region. */
 export const updateArea = async (id: string, updates: { name?: string; region_id?: string }) => {
-  const [existing, regionExists] = await Promise.all([
-    prisma.area.findUnique({ where: { id } }),
-    updates.region_id ? prisma.region.findUnique({ where: { id: updates.region_id } }) : null,
-  ]);
+  const existing = await prisma.area.findUnique({ where: { id } });
 
   if (!existing) {
     throw new NotFoundError('Area');
   }
 
-  if (updates.region_id && !regionExists) {
-    throw new NotFoundError('Region');
+  const changes = changedFields(existing, updates);
+
+  if (!hasChanges(changes)) {
+    return existing;
   }
 
-  const updatedName = updates.name ?? existing.name;
-  const updatedRegionId = updates.region_id ?? existing.region_id;
+  if (changes.region_id) {
+    const regionExists = await prisma.region.findUnique({ where: { id: changes.region_id } });
 
-  if (updates.name || updates.region_id) {
-    const nameExists = await prisma.area.findFirst({
-      where: { name: updatedName, region_id: updatedRegionId, NOT: { id } },
-    });
-
-    if (nameExists) {
-      throw new ConflictError(`Area name "${updatedName}" already exists in this region`);
+    if (!regionExists) {
+      throw new NotFoundError('Region');
     }
   }
 
-  return prisma.area.update({ where: { id }, data: updates });
+  const updatedName = changes.name ?? existing.name;
+  const updatedRegionId = changes.region_id ?? existing.region_id;
+
+  const nameExists = await prisma.area.findFirst({
+    where: { name: updatedName, region_id: updatedRegionId, NOT: { id } },
+  });
+
+  if (nameExists) {
+    throw new ConflictError(`Area name "${updatedName}" already exists in this region`);
+  }
+
+  return prisma.area.update({ where: { id }, data: changes });
 };
 
 /** Deletes an area by ID. */
-export const deleteArea = async (id: string) => {
-  const area = await prisma.area.findUnique({ where: { id } });
-
-  if (!area) {
-    throw new NotFoundError('Area');
-  }
-
-  return prisma.area.delete({ where: { id } });
-};
+export const deleteArea = async (id: string) =>
+  orNotFound('Area', () => prisma.area.delete({ where: { id } }));
 
 /** Fetches paginated areas with optional name and region_id filters. */
 export const getAreas = async (

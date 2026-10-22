@@ -2,6 +2,8 @@ import prisma from '../../prisma.js';
 import { auth } from '../../auth.js';
 import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import { changedFields, hasChanges } from '../../utils/changed-fields.js';
+import { orNotFound } from '../../utils/prisma-errors.js';
 import type { UserCreate } from './user.validator.js';
 
 /** Better Auth stores email+password logins as an Account row with this provider id. */
@@ -44,11 +46,18 @@ export const updateUser = async (
     throw new NotFoundError('User');
   }
 
-  const { password, ...profile } = updates;
-  if (profile.email) {
-    profile.email = profile.email.toLowerCase();
+  const { password, ...requested } = updates;
+  if (requested.email) {
+    requested.email = requested.email.toLowerCase();
+  }
 
-    // Checking if the new email is already in use by another user
+  const profile = changedFields(existingUser, requested);
+
+  if (!password && !hasChanges(profile)) {
+    return existingUser;
+  }
+
+  if (profile.email) {
     const emailExists = await prisma.user.findFirst({
       where: {
         email: profile.email,
@@ -94,13 +103,9 @@ export const updateUser = async (
   });
 };
 
-export const deleteUser = async (id: string) => {
-  const user = await prisma.user.findUnique({ where: { id } });
-  if (!user) throw new NotFoundError('User');
-
+export const deleteUser = async (id: string) =>
   // Sessions and accounts are removed by the ON DELETE CASCADE foreign keys.
-  return prisma.user.delete({ where: { id } });
-};
+  orNotFound('User', () => prisma.user.delete({ where: { id } }));
 
 export const getAllUsers = async (offset: number, limit: number) => {
   const fetchPageRows = (take: number) =>

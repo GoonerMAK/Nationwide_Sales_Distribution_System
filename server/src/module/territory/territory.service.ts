@@ -1,6 +1,8 @@
 import prisma from '../../prisma.js';
 import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import { changedFields, hasChanges } from '../../utils/changed-fields.js';
+import { orNotFound } from '../../utils/prisma-errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 /** Creates a new territory within an area. Validates area exists and name is unique within area. */
@@ -24,45 +26,43 @@ export const createTerritory = async (name: string, area_id: string) => {
 
 /** Updates a territory by ID. Validates area exists and name uniqueness within area. */
 export const updateTerritory = async (id: string, updates: { name?: string; area_id?: string }) => {
-  const [existing, areaExists] = await Promise.all([
-    prisma.territory.findUnique({ where: { id } }),
-    updates.area_id ? prisma.area.findUnique({ where: { id: updates.area_id } }) : null,
-  ]);
+  const existing = await prisma.territory.findUnique({ where: { id } });
 
   if (!existing) {
     throw new NotFoundError('Territory');
   }
 
-  if (updates.area_id && !areaExists) {
-    throw new NotFoundError('Area');
+  const changes = changedFields(existing, updates);
+
+  if (!hasChanges(changes)) {
+    return existing;
   }
 
-  const updatedName = updates.name ?? existing.name;
-  const updatedAreaId = updates.area_id ?? existing.area_id;
+  if (changes.area_id) {
+    const areaExists = await prisma.area.findUnique({ where: { id: changes.area_id } });
 
-  if (updates.name || updates.area_id) {
-    const nameExists = await prisma.territory.findFirst({
-      where: { name: updatedName, area_id: updatedAreaId, NOT: { id } },
-    });
-
-    if (nameExists) {
-      throw new ConflictError(`Territory name "${updatedName}" already exists in this area`);
+    if (!areaExists) {
+      throw new NotFoundError('Area');
     }
   }
 
-  return prisma.territory.update({ where: { id }, data: updates });
+  const updatedName = changes.name ?? existing.name;
+  const updatedAreaId = changes.area_id ?? existing.area_id;
+
+  const nameExists = await prisma.territory.findFirst({
+    where: { name: updatedName, area_id: updatedAreaId, NOT: { id } },
+  });
+
+  if (nameExists) {
+    throw new ConflictError(`Territory name "${updatedName}" already exists in this area`);
+  }
+
+  return prisma.territory.update({ where: { id }, data: changes });
 };
 
 /** Deletes a territory by ID. */
-export const deleteTerritory = async (id: string) => {
-  const territory = await prisma.territory.findUnique({ where: { id } });
-
-  if (!territory) {
-    throw new NotFoundError('Territory');
-  }
-
-  return prisma.territory.delete({ where: { id } });
-};
+export const deleteTerritory = async (id: string) =>
+  orNotFound('Territory', () => prisma.territory.delete({ where: { id } }));
 
 /** Fetches paginated territories with optional name and area_id filters. */
 export const getTerritories = async (

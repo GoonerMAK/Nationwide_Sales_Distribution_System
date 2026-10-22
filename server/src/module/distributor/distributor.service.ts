@@ -1,6 +1,8 @@
 import prisma from '../../prisma.js';
 import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import { changedFields, hasChanges } from '../../utils/changed-fields.js';
+import { orNotFound } from '../../utils/prisma-errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 export const createDistributor = async (name: string) => {
@@ -26,31 +28,33 @@ export const updateDistributor = async (id: string, updates: { name?: string }) 
     throw new NotFoundError('Distributor');
   }
 
-  if (updates.name) {
+  const changes = changedFields(existingDistributor, updates);
+
+  if (!hasChanges(changes)) {
+    return existingDistributor;
+  }
+
+  if (changes.name) {
     const nameExists = await prisma.distributor.findFirst({
       where: {
-        name: updates.name,
+        name: changes.name,
         NOT: { id },
       },
     });
 
     if (nameExists) {
-      throw new ConflictError(`Distributor name "${updates.name}" is already in use`);
+      throw new ConflictError(`Distributor name "${changes.name}" is already in use`);
     }
   }
 
   return await prisma.distributor.update({
     where: { id },
-    data: updates,
+    data: changes,
   });
 };
 
-export const deleteDistributor = async (id: string) => {
-  const distributor = await prisma.distributor.findUnique({ where: { id } });
-  if (!distributor) throw new NotFoundError('Distributor');
-
-  return prisma.distributor.delete({ where: { id } });
-};
+export const deleteDistributor = async (id: string) =>
+  orNotFound('Distributor', () => prisma.distributor.delete({ where: { id } }));
 
 export const getDistributors = async (
   offset: number,

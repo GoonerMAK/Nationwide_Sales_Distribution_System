@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import redisClient from '../redis.js';
+import { redisBreaker } from '../redis-breaker.js';
 import { logger } from '../utils/logger.js';
 import { HTTP_STATUS } from '../constants/http-status.js';
 
@@ -24,11 +25,20 @@ export function cacheMiddleware(resource: string, ttl = 300) {
     }
 
     try {
-      const generation = (await redisClient.get(GEN_PREFIX + resource)) ?? '0';
-      const query = canonicalQuery(req.query as Record<string, unknown>);
-      const cacheKey = `${CACHE_PREFIX}${resource}:${generation}:${req.path}?${query}`;
+      const lookup = await redisBreaker.run(async () => {
+        const generation = (await redisClient.get(GEN_PREFIX + resource)) ?? '0';
+        const query = canonicalQuery(req.query as Record<string, unknown>);
+        const key = `${CACHE_PREFIX}${resource}:${generation}:${req.path}?${query}`;
 
-      const cachedData = await redisClient.get(cacheKey);
+        return { cacheKey: key, cachedData: await redisClient.get(key) };
+      }, null);
+
+      if (!lookup) {
+        next();
+        return;
+      }
+
+      const { cacheKey, cachedData } = lookup;
 
       if (cachedData) {
         logger.debug('Cache HIT', { key: cacheKey });
@@ -46,8 +56,8 @@ export function cacheMiddleware(resource: string, ttl = 300) {
 
         // Only cache successful responses
         if (res.statusCode === HTTP_STATUS.OK) {
-          redisClient
-            .setEx(cacheKey, ttl, payload)
+          redisBreaker
+            .run(() => redisClient.setEx(cacheKey, ttl, payload), null)
             .catch((err) => logger.error('Redis cache set error', { error: String(err) }));
         }
         res.type('json');
@@ -65,7 +75,10 @@ export function cacheMiddleware(resource: string, ttl = 300) {
 /** Invalidates every cached entry for the given resources in O(1) each. */
 export async function invalidateCache(...resources: string[]): Promise<void> {
   try {
-    await Promise.all(resources.map((resource) => redisClient.incr(GEN_PREFIX + resource)));
+    await redisBreaker.run(
+      () => Promise.all(resources.map((resource) => redisClient.incr(GEN_PREFIX + resource))),
+      null,
+    );
     logger.debug('Cache invalidated', { resources });
   } catch (error) {
     logger.error('Cache invalidation error', { error: String(error) });

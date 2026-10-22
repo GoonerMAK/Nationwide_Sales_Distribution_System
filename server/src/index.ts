@@ -8,7 +8,11 @@ import { logger } from './utils/logger.js';
 import { requestIdMiddleware } from './middleware/request-id.middleware.js';
 import { requestLoggerMiddleware } from './middleware/request-logger.middleware.js';
 import { securityHeaders } from './middleware/security.middleware.js';
-import { apiRateLimiter, loginRateLimiter } from './middleware/rate-limit.middleware.js';
+import {
+  apiRateLimiter,
+  loginRateLimiter,
+  LOGIN_PATH,
+} from './middleware/rate-limit.middleware.js';
 import { corsMiddleware } from './middleware/cors.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { HTTP_STATUS } from './constants/http-status.js';
@@ -23,6 +27,14 @@ import { salesRepresentativeRouter } from './module/sales-representative/sales-r
 
 export const app = express();
 
+// Health check (served at both /health and /api/health); mounted first so probes skip every middleware below
+app.get(['/health', '/api/health'], (_req, res) => {
+  res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: { status: 'ok', uptime: process.uptime() },
+  });
+});
+
 // Global middleware (order matters)
 app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
@@ -30,21 +42,13 @@ app.use(securityHeaders);
 app.use(corsMiddleware(env.CORS_ORIGINS));
 app.use(apiRateLimiter);
 
-app.use('/api/auth/sign-in', loginRateLimiter);
+app.use(LOGIN_PATH, loginRateLimiter);
 
 // Better Auth handles all /api/auth/* routes (sign-in, sign-out, get-session, admin/*).
 // It must be mounted before express.json(), which would otherwise consume the request body.
 app.all('/api/auth/*splat', toNodeHandler(auth));
 
 app.use(express.json());
-
-// Health check (served at both /health and /api/health)
-app.get(['/health', '/api/health'], (_req, res) => {
-  res.status(HTTP_STATUS.OK).json({
-    success: true,
-    data: { status: 'ok', uptime: process.uptime() },
-  });
-});
 
 // Routes (all API routes live under /api; /health stays at the root for probes)
 const API_PREFIX = '/api';

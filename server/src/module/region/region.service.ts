@@ -1,6 +1,8 @@
 import prisma from '../../prisma.js';
 import { paginate } from '../../utils/pagination.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
+import { changedFields, hasChanges } from '../../utils/changed-fields.js';
+import { orNotFound } from '../../utils/prisma-errors.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 
 /** Creates a new region with a unique name. */
@@ -22,29 +24,28 @@ export const updateRegion = async (id: string, updates: { name?: string }) => {
     throw new NotFoundError('Region');
   }
 
-  if (updates.name) {
+  const changes = changedFields(existing, updates);
+
+  if (!hasChanges(changes)) {
+    return existing;
+  }
+
+  if (changes.name) {
     const nameExists = await prisma.region.findFirst({
-      where: { name: updates.name, NOT: { id } },
+      where: { name: changes.name, NOT: { id } },
     });
 
     if (nameExists) {
-      throw new ConflictError(`Region name "${updates.name}" is already in use`);
+      throw new ConflictError(`Region name "${changes.name}" is already in use`);
     }
   }
 
-  return prisma.region.update({ where: { id }, data: updates });
+  return prisma.region.update({ where: { id }, data: changes });
 };
 
 /** Deletes a region by ID. */
-export const deleteRegion = async (id: string) => {
-  const region = await prisma.region.findUnique({ where: { id } });
-
-  if (!region) {
-    throw new NotFoundError('Region');
-  }
-
-  return prisma.region.delete({ where: { id } });
-};
+export const deleteRegion = async (id: string) =>
+  orNotFound('Region', () => prisma.region.delete({ where: { id } }));
 
 /** Fetches paginated regions with optional name filter. */
 export const getRegions = async (offset: number, limit: number, filters?: { name?: string }) => {
